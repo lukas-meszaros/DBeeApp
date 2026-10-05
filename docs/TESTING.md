@@ -9,7 +9,7 @@
 
 ## Testbed
 
-`testbed/compose.yaml` will run two independent PostgreSQL services (`db_control` and `db_reporting`) with test-only credentials, explicit health checks, initialization SQL, and deterministic seed rows. It must not use production credentials. Integration tests must clearly skip when Docker/services are unavailable rather than imply they ran.
+`testbed/compose.yaml` runs two independent PostgreSQL services (`db_control` and `db_reporting`) with test-only credentials, explicit health checks, initialization SQL, and deterministic seed rows. It must not use production credentials. Integration tests must clearly skip when Docker/services are unavailable rather than imply they ran.
 
 ## Commands
 

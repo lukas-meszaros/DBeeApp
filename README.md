@@ -4,6 +4,8 @@
 
 DBeeApp is a lightweight Python CLI for ordered PostgreSQL workflows described in YAML. It uses pg8000, binds SQL values separately, reuses database sessions by default, supports trusted password-provider scripts, and is designed for deployment without runtime internet access.
 
+Repository: [lukas-meszaros/DBeeApp](https://github.com/lukas-meszaros/DBeeApp)
+
 ```yaml
 version: 1
 job:

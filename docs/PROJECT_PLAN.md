@@ -37,4 +37,4 @@ Deliver DBeeApp as a small, secure, documented Python CLI that runs declarative 
 
 ## Current Status
 
-Core CLI/workflow, provider boundary, session/transaction behavior, outputs, examples, and local PostgreSQL integration coverage have been implemented. Remaining release gates are offline installation proof, RHEL/Python matrix checks, CyberArk version-specific validation, performance measurements, final security/artifact inspection, and publication. See `PROGRESS.md` for exact evidence.
+Core CLI/workflow, provider boundary, session/transaction behavior, outputs, examples, and local PostgreSQL integration coverage have been implemented. The public source repository exists at `https://github.com/lukas-meszaros/DBeeApp`; no certified release/tag exists yet. Remaining release gates are target RHEL execution, CyberArk version-specific validation, repeated performance/RSS measurements, and final security/artifact review. See `PROGRESS.md` for exact evidence.
