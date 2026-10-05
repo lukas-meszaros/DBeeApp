@@ -3,7 +3,7 @@ job:
   id: basic_application_lookup
   description: Look up one application in the control database
 variables:
-  application: TEST_APP
+  application: SAMPLE_APP_002
 databases:
   control:
     host: 127.0.0.1
@@ -27,7 +27,7 @@ steps:
     params:
       application: "{{ vars.application }}"
     result:
-      mode: first
+      mode: rows
   - id: report
     type: output
     source: lookup

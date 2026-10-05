@@ -5,21 +5,23 @@ job:
 variables:
   application: TEST_APP
 databases:
-  control:
+  reporting:
     host: 127.0.0.1
-    port: 55432
-    database: control
-    user: control_user
+    port: 55433
+    database: reporting
+    user: reporting_user
     ssl: {mode: disable}
     credential:
       provider: dummy
-      options: {password: dbeeapp_control_test_only}
+      options: {password: dbeeapp_reporting_test_only}
 steps:
   - id: lookup
     type: sql
-    db: control
+    db: reporting
     sql_file: sql/application_details.sql
-    params: {name: "{{ vars.application }}"}
+    params:
+      minimum_id: 1
+      maximum_id: 300
     result: {mode: rows}
   - id: csv
     type: output

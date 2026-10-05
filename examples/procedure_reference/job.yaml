@@ -1,0 +1,92 @@
+version: 1
+job:
+  id: procedure_session_settings_reference
+  description: Configure session settings, validate them, create and call a procedure, then inspect its results
+variables:
+  row_limit: 250
+  run_label: local_reference_run
+databases:
+  reporting:
+    host: 127.0.0.1
+    port: 55433
+    database: reporting
+    user: reporting_user
+    session:
+      mode: reuse
+    ssl:
+      mode: disable
+    credential:
+      provider: dummy
+      options:
+        password: dbeeapp_reporting_test_only
+steps:
+  - id: configure_session
+    type: sql
+    db: reporting
+    sql_file: sql/set_session_variables.sql
+    params:
+      row_limit: "{{ vars.row_limit }}"
+      run_label: "{{ vars.run_label }}"
+    result:
+      mode: first
+    set:
+      effective_row_limit: "{{ steps.configure_session.first.row_limit }}"
+      effective_run_label: "{{ steps.configure_session.first.run_label }}"
+
+  - id: check_session_and_capacity
+    type: sql
+    db: reporting
+    sql_file: sql/check_session_and_capacity.sql
+    result:
+      mode: none
+
+  - id: read_session_settings
+    type: sql
+    db: reporting
+    sql_file: sql/read_session_settings.sql
+    result:
+      mode: first
+    set:
+      effective_row_limit: "{{ steps.read_session_settings.first.row_limit }}"
+      effective_run_label: "{{ steps.read_session_settings.first.run_label }}"
+      available_rows: "{{ steps.read_session_settings.first.available_rows }}"
+
+  - id: ensure_result_table
+    type: sql
+    db: reporting
+    sql_file: sql/create_result_table.sql
+    result:
+      mode: none
+
+  - id: define_procedure
+    type: sql
+    db: reporting
+    sql_file: sql/define_reference_procedure.sql
+    result:
+      mode: none
+
+  - id: execute_procedure
+    type: sql
+    db: reporting
+    sql_file: sql/call_reference_procedure.sql
+    result:
+      mode: none
+
+  - id: inspect_procedure_result
+    type: sql
+    db: reporting
+    sql_file: sql/read_latest_procedure_result.sql
+    params:
+      run_label: "{{ vars.effective_run_label }}"
+    result:
+      mode: first
+    set:
+      rows_seen: "{{ steps.inspect_procedure_result.first.rows_seen }}"
+
+  - id: report
+    type: output
+    source: inspect_procedure_result
+    target:
+      type: stdout
+    format: text
+    text: "Procedure {{ vars.effective_run_label }} checked {{ vars.rows_seen }} rows (limit {{ vars.effective_row_limit }}; table has {{ vars.available_rows }} rows). Notice messages appear above when server_output.stdout is enabled."

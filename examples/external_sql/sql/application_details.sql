@@ -1,4 +1,4 @@
-SELECT application_id, application_name, status
-FROM control.applications
-WHERE application_name = :name
-ORDER BY application_id;
+SELECT row_id, label
+FROM reporting.sample_rows
+WHERE row_id BETWEEN :minimum_id AND :maximum_id
+ORDER BY row_id;

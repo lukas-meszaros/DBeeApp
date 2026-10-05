@@ -68,7 +68,7 @@ This index reflects the current project structure and implemented ownership boun
 | `dbeeapp/database.py` | pg8000 DB-API named binding, TLS, timeout, SQLSTATE classification, commit/rollback. | `tests/test_engine.py`, `tests/test_postgres_integration.py` |
 | `dbeeapp/sessions.py` | Lazy reuse/new session registry, invalidation, cleanup. | `tests/test_sessions.py`, `tests/test_postgres_integration.py` |
 | `dbeeapp/results.py` | Bounded materialized and batched streaming results, JSON conversion. | `tests/test_results.py`, `tests/test_postgres_integration.py` |
-| `dbeeapp/engine.py` | Sequential steps, variables, conditions, session and transaction orchestration. | `tests/test_engine.py`, `tests/test_postgres_integration.py` |
+| `dbeeapp/engine.py`, `dbeeapp/server_output.py` | Sequential workflow; opt-in routing of bounded PostgreSQL server notices to stdout/file. | `tests/test_engine.py`, `tests/test_server_output.py`, `tests/test_postgres_integration.py` |
 | `dbeeapp/outputs.py` | Bounded stdout/file text, CSV, JSON, JSONL; atomic overwrite. | `tests/test_outputs.py` |
 | `providers/dummy.py` | Test-only password provider. | `tests/test_credentials.py` |
 | `providers/cyberark_aim.py` | HTTPS CyberArk AIM account retrieval provider; endpoint contract needs target-version confirmation. | Manual/provider follow-up |
@@ -81,10 +81,11 @@ This index reflects the current project structure and implemented ownership boun
 | --- | --- |
 | `tests/test_cli.py`, `tests/test_config.py`, `tests/test_template_loader.py`, `tests/test_validator.py` | CLI/config/parser/schema/preflight tests. |
 | `tests/test_vendor_runtime.py` | Confirms vendored runtime imports and CLI work with Python `-S`. |
+| `tests/test_server_output.py` | Notice severity/message filtering, stdout/file routing, truncation, and bounded-buffer overflow reporting. |
 | `tests/test_credentials.py` | Provider process protocol, timeout, malformed output and secret diagnostics. |
 | `tests/test_resolver.py`, `tests/test_results.py`, `tests/test_outputs.py` | Values, conditions, limits, stream and output-format tests. |
 | `tests/test_sessions.py`, `tests/test_engine.py`, `tests/test_errors.py` | Fake-DB lifecycle, workflows, transactions, taxonomy. |
 | `tests/test_postgres_integration.py` | Opt-in tests against both live testbed PostgreSQL services. |
 | `testbed/compose.yaml` | Two independent PostgreSQL 16.4 containers bound to loopback ports 55432/55433. |
 | `testbed/init/control.sql`, `testbed/init/reporting.sql` | Test-only roles, schemas and deterministic fixture data. |
-| `examples/<job>/job.yaml`, `examples/<job>/sql/` | Ten isolated job folders; external SQL assets live with their job. |
+| `examples/<job>/job.yaml`, `examples/<job>/sql/` | Eleven isolated job folders, including a multi-step procedure/session-variable/NOTICE reference; SQL assets live with their job. |

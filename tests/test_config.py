@@ -55,14 +55,25 @@ class ConfigTests(unittest.TestCase):
         with self.assertRaisesRegex(ConfigurationError, "provider names must be lowercase identifiers"):
             load_config(self.path)
 
+    def test_server_output_is_opt_in_and_validated(self):
+        self.assertFalse(load_config()["server_output"]["stdout"])
+        self.path.write_text("server_output:\n  stdout: true\n  max_messages: 0\n", encoding="utf-8")
+        with self.assertRaisesRegex(ConfigurationError, "max_messages must be a positive integer"):
+            load_config(self.path)
+        self.path.write_text("server_output:\n  file: relative/messages.log\n", encoding="utf-8")
+        with self.assertRaisesRegex(ConfigurationError, "server_output.file must be an absolute path"):
+            load_config(self.path)
+
     def test_production_and_testbed_config_names_have_intended_content(self):
         config_dir = Path(__file__).resolve().parents[1] / "config"
         production = load_config(config_dir / "dbeeapp.yaml.example")
         testbed = load_config(config_dir / "dbeeapp.testbed.yaml")
         self.assertIn("cyberark_aim", production["providers"])
         self.assertEqual(production["postgresql"]["ssl_mode"], "verify-full")
+        self.assertFalse(production["server_output"]["stdout"])
         self.assertEqual(testbed["postgresql"]["ssl_mode"], "disable")
         self.assertTrue(testbed["postgresql"]["allow_insecure"])
+        self.assertTrue(testbed["server_output"]["stdout"])
 
 
 if __name__ == "__main__":

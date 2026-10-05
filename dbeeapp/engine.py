@@ -18,6 +18,7 @@ from dbeeapp.outputs import write_output
 from dbeeapp.resolver import resolve_value
 from dbeeapp.results import collect_result
 from dbeeapp.sessions import SessionManager
+from dbeeapp.server_output import drain_notices, route_notices
 
 
 def _logger(config, override_level=None):
@@ -115,6 +116,19 @@ class WorkflowEngine:
         except (OSError, UnicodeDecodeError):
             raise SQLError("external SQL file could not be read") from None
 
+    def _route_server_output(self, connection, step):
+        notices, dropped = drain_notices(connection)
+        route_notices(
+            notices,
+            dropped,
+            self.config,
+            self.stdout,
+            self.logger,
+            self.document["job"]["id"],
+            step["id"],
+            step["db"],
+        )
+
     def _sql_on_connection(self, step, connection, in_transaction=False):
         started = time.monotonic()
         cursor = None
@@ -132,10 +146,13 @@ class WorkflowEngine:
                     params,
                     timeout,
                     self.config["results"]["fetch_batch_size"],
+                    notice_callback=lambda: self._route_server_output(connection, step),
                 )
+                self._route_server_output(connection, step)
                 result = collect_result(streaming_cursor, mode, self.config, step.get("result", {}))
             else:
                 execute(cursor, sql, params, timeout)
+                self._route_server_output(connection, step)
                 result = collect_result(cursor, mode, self.config, step.get("result", {}))
             if mode == "stream":
                 stream = result["stream"]
@@ -163,6 +180,7 @@ class WorkflowEngine:
                 result["stream"] = finalized_stream()
             elif not in_transaction:
                 commit(connection)
+                self._route_server_output(connection, step)
             result["status"] = "success"
             result["duration"] = time.monotonic() - started
             self.context["steps"][step["id"]] = result
@@ -170,6 +188,10 @@ class WorkflowEngine:
                 self.context["vars"][name] = resolve_value(expression, self.context)
             return result
         except DBeeAppError as error:
+            try:
+                self._route_server_output(connection, step)
+            except Exception:
+                pass
             self.context["steps"][step["id"]] = {
                 "status": "failure",
                 "error_category": error.category,
@@ -184,6 +206,10 @@ class WorkflowEngine:
                     pass
             raise
         except Exception:
+            try:
+                self._route_server_output(connection, step)
+            except Exception:
+                pass
             self.context["steps"][step["id"]] = {
                 "status": "failure",
                 "error_category": "sql",

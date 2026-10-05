@@ -69,6 +69,20 @@ Provider defaults are also application-configurable. Put shared provider setting
 
 The file [config/dbeeapp.testbed.yaml](../config/dbeeapp.testbed.yaml) is for the local Docker testbed only. It disables PostgreSQL TLS verification and logging for local test runs; it is not a production baseline.
 
+To receive PostgreSQL `RAISE NOTICE` and other server messages delivered to the client, opt in through application config:
+
+```yaml
+server_output:
+  stdout: true
+  file: /var/log/dbeeapp/server-output.log
+  max_message_bytes: 8192
+  max_messages: 1000
+```
+
+The file destination is appended to and is separate from the structured application log. Only severity and primary message text are forwarded. Server messages may interleave with stdout output; use the file destination when stdout must remain machine-readable. Never include passwords or sensitive values in a SQL `RAISE` message. See `TEMPLATE_SPEC_V1.md` for the full option definitions.
+
+For an end-to-end example of session settings, preflight checks, procedure creation and `CALL`, follow-up queries, and `RAISE NOTICE`, see [examples/procedure_reference/job.yaml](../examples/procedure_reference/job.yaml). The procedure leaves transaction control to DBeeApp and does not issue `COMMIT` or `ROLLBACK`.
+
 PostgreSQL TLS verification is strict by default. Configure a trusted CA bundle where needed; do not disable verification to bypass a certificate error.
 
 ## Sessions and Transactions

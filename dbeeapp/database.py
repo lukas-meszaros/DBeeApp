@@ -2,6 +2,7 @@
 
 import ssl
 import secrets
+from collections import deque
 
 import pg8000.dbapi
 
@@ -16,6 +17,23 @@ from dbeeapp.errors import (
 pg8000.dbapi.paramstyle = "named"
 
 
+class NoticeBuffer(deque):
+    """Bounded pg8000 notice queue that reports how many messages were dropped."""
+
+    def __init__(self, maxlen):
+        super().__init__(maxlen=maxlen)
+        self.dropped = 0
+
+    def append(self, notice):
+        if len(self) == self.maxlen:
+            self.dropped += 1
+        super().append(notice)
+
+    def take_dropped(self):
+        dropped, self.dropped = self.dropped, 0
+        return dropped
+
+
 def connect(database, password, config):
     """Open a PostgreSQL connection with explicit TLS and finite connect timeout."""
     ssl_settings = database.get("ssl", {})
@@ -28,7 +46,7 @@ def connect(database, password, config):
         ssl_context.check_hostname = True
         ssl_context.verify_mode = ssl.CERT_REQUIRED
     try:
-        return pg8000.dbapi.connect(
+        connection = pg8000.dbapi.connect(
             user=database["user"],
             password=password,
             host=database["host"],
@@ -38,6 +56,8 @@ def connect(database, password, config):
             timeout=float(database.get("connect_timeout", config["timeouts"]["connect"])),
             application_name="DBeeApp",
         )
+        connection.notices = NoticeBuffer(config.get("server_output", {}).get("max_messages", 1000))
+        return connection
     except Exception:
         raise DatabaseConnectionError("could not establish PostgreSQL connection") from None
 
@@ -67,7 +87,7 @@ def _execute_bound(cursor, sql, params=None):
         cursor.execute(sql)
 
 
-def execute_stream(cursor, sql, params, timeout, batch_size):
+def execute_stream(cursor, sql, params, timeout, batch_size, notice_callback=None):
     """Declare an internal server-side cursor and prefetch one bounded batch."""
     try:
         if timeout:
@@ -80,7 +100,7 @@ def execute_stream(cursor, sql, params, timeout, batch_size):
         _execute_bound(cursor, "DECLARE {} NO SCROLL CURSOR FOR {}".format(name, sql), params)
         _execute_bound(cursor, "FETCH FORWARD {} FROM {}".format(batch_size, name))
         first_batch = cursor.fetchmany(batch_size)
-        return StreamingCursor(cursor, name, batch_size, first_batch)
+        return StreamingCursor(cursor, name, batch_size, first_batch, notice_callback=notice_callback)
     except pg8000.dbapi.InterfaceError:
         raise ConnectionLostError("PostgreSQL connection was lost while starting result stream") from None
     except pg8000.dbapi.Error as error:
@@ -93,7 +113,7 @@ def execute_stream(cursor, sql, params, timeout, batch_size):
 class StreamingCursor:
     """DB-API cursor facade backed by a PostgreSQL server-side cursor."""
 
-    def __init__(self, cursor, name, batch_size, first_batch):
+    def __init__(self, cursor, name, batch_size, first_batch, notice_callback=None):
         self.cursor = cursor
         self.name = name
         self.batch_size = batch_size
@@ -101,6 +121,7 @@ class StreamingCursor:
         self.first_pending = True
         self.description = cursor.description
         self.closed = False
+        self.notice_callback = notice_callback
 
     def fetchmany(self, size=None):
         size = size or self.batch_size
@@ -113,7 +134,10 @@ class StreamingCursor:
             return rows
         try:
             _execute_bound(self.cursor, "FETCH FORWARD {} FROM {}".format(size, self.name))
-            return self.cursor.fetchmany(size)
+            rows = self.cursor.fetchmany(size)
+            if self.notice_callback:
+                self.notice_callback()
+            return rows
         except pg8000.dbapi.Error as error:
             raise_database_error(error)
 

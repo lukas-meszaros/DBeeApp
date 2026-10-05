@@ -13,6 +13,7 @@ Templates and SQL files may be authored by workflow users and are treated as unt
 - SQL source files are size-limited and checked for UTF-8 readability during validation, before providers or connections are invoked.
 - Provider IDs are validated names resolved inside a fixed administrator-owned directory; no user-provided executable path; subprocess without shell and no secrets in argv.
 - Passwords remain out of context, outputs, CLI descriptions, and logs. Provider stdout is parsed under a strict bounded protocol; stderr is not forwarded. Database exceptions are normalized to avoid accidental sensitive payload exposure.
+- PostgreSQL server-message forwarding is disabled by default. When opted in, only severity and primary message are routed; message size and per-connection buffer are bounded. SQL authors must never put secrets in `RAISE` messages because an enabled destination can disclose them.
 - Provider and database HTTPS/TLS certificate verification enabled; finite connection/request/provider timeouts.
 - PostgreSQL connections use explicit secure TLS configuration; no silent insecure fallback.
 - Row, output, SQL, and provider IPC limits bound memory and execution.

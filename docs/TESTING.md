@@ -4,12 +4,15 @@
 
 - Unit tests: loader safety, duplicate keys, schema/unknown-key validation, reference resolver, conditions, path traversal, provider protocol, secret redaction, result limits, session registry, transaction rollback, output formatting, exit categories.
 - CLI tests: validate/describe do not invoke providers, connect, execute SQL, or create output; run behavior and diagnostics are stable.
-- PostgreSQL integration tests: run only when both testbed services are available; verify SQL binding, cross-database reuse, isolated new sessions, overrides, temporary state, DML commit, transaction rollback, connection cleanup, stream limits, and outputs.
+- PostgreSQL integration tests: run only when both testbed services are available; verify SQL binding, cross-database reuse, isolated new sessions, overrides, temporary state, DML commit, transaction rollback, connection cleanup, stream limits, server NOTICE forwarding, procedure reference execution, and outputs.
+- Server-output unit tests cover notice severity/message routing, detail/hint exclusion, truncation, bounded-buffer overflow, and optional file output.
 - Security tests: malicious YAML tags, arbitrary provider paths, malformed/oversized provider output, timeout, stdout/stderr/log/exception secret scans, traversal/symlink paths, unknown references and IDs.
 
 ## Testbed
 
 `testbed/compose.yaml` runs two independent PostgreSQL services (`db_control` and `db_reporting`) with test-only credentials, explicit health checks, initialization SQL, and deterministic seed rows. It must not use production credentials. Integration tests must clearly skip when Docker/services are unavailable rather than imply they ran.
+
+Initialization seeds 300 application rows in each database and 10,000 reporting rows. The external-SQL CSV example selects 300 rows; the large-result example streams 10,000.
 
 ## Commands
 

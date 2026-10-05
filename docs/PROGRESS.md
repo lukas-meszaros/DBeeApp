@@ -8,19 +8,21 @@
 - Runtime third-party libraries are checked in as pure-Python source under `dbeeapp/_vendor`; `dbeeapp/__init__.py` loads them locally before runtime imports.
 - Verified the runtime with Python 3.9.6 and `python -S`, which disables site initialization. The CLI and all runtime imports work without installed third-party packages.
 - Verified all six vendored distributions have license text and `.dist-info` metadata; the vendor tree contains no native extension files.
-- Moved all ten examples to `examples/<job>/job.yaml`, each with a sibling `sql/` directory. `external_sql` keeps its query under `examples/external_sql/sql/`.
-- All ten job templates pass CLI validation under Python 3.9.6 with `-S`.
+- Moved all eleven examples to `examples/<job>/job.yaml`, each with a sibling `sql/` directory. `external_sql` keeps its query under `examples/external_sql/sql/`.
+- All eleven job templates pass CLI validation under Python 3.9.6 with `-S`.
 - Provider defaults can be configured centrally in application YAML, with per-database `credential.options` taking precedence. `dbeeapp.yaml.example` is an inert production-oriented template; `dbeeapp.testbed.yaml` is explicitly local-only.
-- All five live PostgreSQL integration tests pass under Python 3.9.6 with `-S` against two PostgreSQL 16.4 containers.
-- Latest full suite: 78 tests passed, 0 failed under Python 3.9.6 with `-S`, including five live PostgreSQL integration tests.
+- PostgreSQL server NOTICE/INFO messages can be routed (opt-in) to stdout and/or a separate append-only file; the buffer and message sizes are bounded, and only severity/message fields are forwarded.
+- Added `examples/procedure_reference`, demonstrating dynamic session variables, preflight checks, procedure creation/call, post-call query, and `RAISE NOTICE`; added 300 application fixtures in each database and a data-backed CSV example.
+- All five live PostgreSQL integration tests pass under Python 3.9.6 with `-S` against two PostgreSQL 16.4 containers. Procedure NOTICE forwarding and the 300-row CSV output are asserted end to end.
+- Latest full suite: 85 tests passed, 0 failed under Python 3.9.6 with `-S`, including five live PostgreSQL integration tests.
 - `compileall`, editor diagnostics, and a high-confidence token/private-key pattern scan passed.
 - Public repository `https://github.com/lukas-meszaros/DBeeApp` is on `main`. No certified release tag exists.
 
 ## Test Status
 
-- Python 3.9.6, site disabled: final full run passed 78 tests, including five live PostgreSQL integration tests.
+- Python 3.9.6, site disabled: final full run passed 85 tests, including five live PostgreSQL integration tests.
 - PostgreSQL 16.4: both testbed services passed reuse/new/override/temp-state, transaction identity/rollback, timeout recovery, and example workflow tests.
-- Local test containers were stopped after integration validation; named volumes were preserved.
+- Local test containers are stopped after integration validation; named volumes are preserved.
 - Python 3.13.13 also passed earlier validation before the vendoring transition; latest full suite was run on Python 3.9.6.
 
 ## Remaining

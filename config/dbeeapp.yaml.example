@@ -36,3 +36,9 @@ failures:
   enabled: true
   file: /var/log/dbeeapp/failures.log
   tag: "[DBeeApp_Failure]"
+
+server_output:
+  stdout: false
+  file: null
+  max_message_bytes: 8192
+  max_messages: 1000

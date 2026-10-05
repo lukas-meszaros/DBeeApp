@@ -10,6 +10,11 @@ CREATE TABLE reporting.application_status (
 INSERT INTO reporting.application_status (application_id, application_name, status) VALUES
     (101, 'TEST_APP', 'READY'),
     (102, 'PAUSED_APP', 'PAUSED');
+INSERT INTO reporting.application_status (application_id, application_name, status)
+SELECT 1000 + item,
+       'SAMPLE_APP_' || lpad(item::text, 3, '0'),
+       CASE WHEN item % 5 = 0 THEN 'PAUSED' ELSE 'READY' END
+FROM generate_series(1, 300) AS item;
 CREATE TABLE reporting.sample_rows (
     row_id integer PRIMARY KEY,
     label text NOT NULL

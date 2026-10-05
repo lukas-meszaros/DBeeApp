@@ -58,7 +58,7 @@ An explicit transaction step uses one connection, begins one DB-API transaction,
 
 ## Output, Logging, and Cleanup
 
-Output formatting is separate from SQL execution and supports stdout or configured files. Overwrite should use a same-directory temporary file plus atomic replace where platform/filesystem semantics allow; append is not atomic. Output paths are validated before execution and filesystem ownership/permissions remain an administrator responsibility. Logging includes timestamps, job/step/database IDs, status, duration, and error category, never SQL parameter values or provider output. Cleanup attempts all connections independently.
+Output formatting is separate from SQL execution and supports stdout or configured files. Overwrite should use a same-directory temporary file plus atomic replace where platform/filesystem semantics allow; append is not atomic. Output paths are validated before execution and filesystem ownership/permissions remain an administrator responsibility. Application config may opt PostgreSQL server notices into stdout and/or a separate append-only file. DBeeApp drains pg8000's bounded notice queue after SQL execution and during server-cursor fetches, forwarding only severity and primary message; detail, hint, context, and SQLSTATE fields are discarded. Logging includes timestamps, job/step/database IDs, status, duration, and error category, never SQL parameter values or provider output. Cleanup attempts all connections independently.
 
 ## Research Sources
 

@@ -9,6 +9,11 @@ CREATE TABLE control.applications (
 INSERT INTO control.applications VALUES
     (101, 'TEST_APP', 'READY'),
     (102, 'PAUSED_APP', 'PAUSED');
+INSERT INTO control.applications (application_id, application_name, status)
+SELECT 1000 + item,
+       'SAMPLE_APP_' || lpad(item::text, 3, '0'),
+       CASE WHEN item % 5 = 0 THEN 'PAUSED' ELSE 'READY' END
+FROM generate_series(1, 300) AS item;
 CREATE TABLE control.account (
     account_id integer PRIMARY KEY,
     balance integer NOT NULL

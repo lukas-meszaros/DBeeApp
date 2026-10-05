@@ -6,7 +6,7 @@ import re
 from dbeeapp.errors import ConfigurationError
 from dbeeapp.template_loader import load_yaml
 
-_CONFIG_KEYS = {"provider_dir", "providers", "timeouts", "session", "postgresql", "results", "logging", "failures"}
+_CONFIG_KEYS = {"provider_dir", "providers", "timeouts", "session", "postgresql", "results", "logging", "failures", "server_output"}
 _PROVIDER_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 _SECTIONS = {
     "timeouts": {"connect", "provider", "sql"},
@@ -15,6 +15,7 @@ _SECTIONS = {
     "results": {"fetch_batch_size", "max_rows", "max_bytes", "max_output_bytes"},
     "logging": {"enabled", "file", "level"},
     "failures": {"enabled", "file", "tag"},
+    "server_output": {"stdout", "file", "max_message_bytes", "max_messages"},
 }
 
 
@@ -37,6 +38,7 @@ def default_config():
         "results": {"fetch_batch_size": 500, "max_rows": 10000, "max_bytes": 10485760, "max_output_bytes": 10485760},
         "logging": {"enabled": True, "file": None, "level": "INFO"},
         "failures": {"enabled": True, "file": None, "tag": "[DBeeApp_Failure]"},
+        "server_output": {"stdout": False, "file": None, "max_message_bytes": 8192, "max_messages": 1000},
     }
 
 
@@ -105,6 +107,17 @@ def load_config(path=None):
         for key in ("file",):
             if values[key] is not None and not isinstance(values[key], str):
                 raise ConfigurationError("{}.{} must be a path string or null".format(section, key))
+    server_output = config["server_output"]
+    if not isinstance(server_output["stdout"], bool):
+        raise ConfigurationError("server_output.stdout must be boolean")
+    if server_output["file"] is not None and not isinstance(server_output["file"], str):
+        raise ConfigurationError("server_output.file must be a path string or null")
+    if server_output["file"] is not None and not Path(server_output["file"]).is_absolute():
+        raise ConfigurationError("server_output.file must be an absolute path")
+    for key in ("max_message_bytes", "max_messages"):
+        value = server_output[key]
+        if isinstance(value, bool) or not isinstance(value, int) or value <= 0:
+            raise ConfigurationError("server_output.{} must be a positive integer".format(key))
     if config["logging"]["level"] not in {"DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"}:
         raise ConfigurationError("logging.level is invalid")
     if not isinstance(config["failures"]["tag"], str):

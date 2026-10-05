@@ -1,18 +1,17 @@
-import contextlib
 import io
 import os
 import unittest
 from pathlib import Path
 
 import dbeeapp
+import pg8000.dbapi
+
 from dbeeapp.config import load_config
 from dbeeapp.engine import WorkflowEngine
 from dbeeapp.errors import TransactionError
 from dbeeapp.sessions import SessionManager
 from dbeeapp.template_loader import load_yaml
 from dbeeapp.validator import validate_template
-import pg8000.dbapi
-
 
 ROOT = Path(__file__).resolve().parents[1]
 ENABLED = os.environ.get("DBEEAPP_INTEGRATION") == "1"
@@ -33,6 +32,10 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
             "ssl": {"mode": "disable"},
             "credential": {"provider": "dummy", "options": {"password": "dbeeapp_reporting_test_only"}},
         }
+        cls._seed_existing_volumes()
+
+    @classmethod
+    def _seed_existing_volumes(cls):
         connection = pg8000.dbapi.connect(
             user="postgres", password="dbeeapp_control_admin_test_only", host="127.0.0.1",
             port=55432, database="control", ssl_context=False, timeout=5,
@@ -43,6 +46,26 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
         connection.commit()
         cursor.close()
         connection.close()
+
+        for database, relation, admin_password, port in (
+            ("control", "applications", "dbeeapp_control_admin_test_only", 55432),
+            ("reporting", "application_status", "dbeeapp_reporting_admin_test_only", 55433),
+        ):
+            connection = pg8000.dbapi.connect(
+                user="postgres", password=admin_password, host="127.0.0.1",
+                port=port, database=database, ssl_context=False, timeout=5,
+            )
+            cursor = connection.cursor()
+            cursor.execute(
+                """INSERT INTO {}.{} (application_id, application_name, status)
+                   SELECT 1000 + item, 'SAMPLE_APP_' || lpad(item::text, 3, '0'),
+                          CASE WHEN item % 5 = 0 THEN 'PAUSED' ELSE 'READY' END
+                   FROM generate_series(1, 300) AS item
+                   ON CONFLICT (application_id) DO NOTHING""".format(database, relation)
+            )
+            connection.commit()
+            cursor.close()
+            connection.close()
 
     def test_reuse_switch_new_override_and_temp_state(self):
         manager = SessionManager({"control": self.control, "reporting": self.reporting}, self.config)
@@ -90,7 +113,7 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
         example_names = (
             "basic_query", "cross_database", "external_sql", "conditional",
             "transaction_commit", "session_state", "session_override", "large_result_stream",
-            "many_sequential_steps",
+            "many_sequential_steps", "procedure_reference",
         )
         for example_name in example_names:
             with self.subTest(example=example_name):
@@ -99,7 +122,14 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                 output = io.StringIO()
                 engine = WorkflowEngine(document, path, self.config, stdout=output)
                 self.assertEqual(engine.run(), 0)
-                if example_name == "session_override.yaml":
+                if example_name == "procedure_reference":
+                    self.assertIn("Preflight passed", output.getvalue())
+                    self.assertIn("Procedure run", output.getvalue())
+                    self.assertIn("NOTICE", output.getvalue())
+                if example_name == "external_sql":
+                    csv_path = Path("/tmp/dbeeapp-application-details.csv")
+                    self.assertEqual(len(csv_path.read_text(encoding="utf-8").splitlines()), 301)
+                if example_name == "session_override":
                     self.assertEqual(engine.context["vars"]["reusable_pid"], engine.context["vars"]["resumed_pid"])
                     self.assertNotEqual(engine.context["vars"]["reusable_pid"], engine.context["vars"]["isolated_pid"])
 

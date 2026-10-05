@@ -8,3 +8,9 @@ logging:
 
 failures:
   enabled: false
+
+server_output:
+  stdout: true
+  file: null
+  max_message_bytes: 8192
+  max_messages: 1000

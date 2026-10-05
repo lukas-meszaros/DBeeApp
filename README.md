@@ -47,7 +47,7 @@ Shared provider defaults go under `providers.<provider_name>` in that applicatio
 
 From a source checkout, run `python -m dbeeapp ...`. Runtime library modules are included under `dbeeapp/_vendor` and loaded from that directory; no `pip install` of runtime requirements is needed. For the expected job-directory layout, see the folders under [examples](examples/).
 
-Implemented features include YAML workflows, PostgreSQL with locally sourced pg8000, no runtime package installation, pluggable password providers including CyberArk AIM, safe bound parameters, lazy reusable and isolated sessions, explicit transaction groups, conditions, bounded results, and file/stdout outputs.
+Implemented features include YAML workflows, PostgreSQL with locally sourced pg8000, no runtime package installation, pluggable password providers including CyberArk AIM, safe bound parameters, lazy reusable and isolated sessions, explicit transaction groups, conditions, bounded results, file/stdout outputs, and opt-in PostgreSQL `RAISE NOTICE` forwarding.
 
 The initial implementation is available in this checkout. RHEL certification and CyberArk version-specific integration are still outstanding; see [Project Progress](docs/PROGRESS.md) for verified status and [Offline Installation](docs/OFFLINE_INSTALLATION.md) for the tested local-wheelhouse workflow.
 

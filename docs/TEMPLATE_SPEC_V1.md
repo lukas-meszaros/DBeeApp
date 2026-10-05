@@ -147,6 +147,17 @@ Application-config provider fields:
 | `providers.<name>` | mapping string to JSON-compatible values | no | `{}` | Passed as defaults to the named provider; the provider validates its own option keys. |
 | `credential.options` | mapping string to JSON-compatible values | no | `{}` | Per-database values overlay `providers.<credential.provider>` for duplicate keys. |
 
+Application-config server output fields:
+
+| Property | Type | Required | Default / allowed | Rules |
+| --- | --- | --- | --- | --- |
+| `server_output.stdout` | boolean | no | `false` | When true, write PostgreSQL server notice messages to CLI stdout. This can interleave with an output step's stdout. |
+| `server_output.file` | absolute path string or null | no | `null` | When set, append notice messages to this separate file. Parent directory must exist and be writable. |
+| `server_output.max_message_bytes` | positive integer | no | `8192` | Maximum UTF-8 bytes for each forwarded message; longer messages are truncated. |
+| `server_output.max_messages` | positive integer | no | `1000` | Per-connection bounded notice queue; on overflow the oldest messages are omitted and an omission summary is routed. |
+
+Only PostgreSQL messages delivered to the client by the driver are available. DBeeApp forwards severity and primary message text, not detail, hint, context, or SQLSTATE. Server-side `RAISE LOG` is not guaranteed to reach the client. Forwarding is disabled unless a destination is enabled. SQL authors must never include credentials or other secrets in `RAISE` messages.
+
 The application config file is selected only with `--config PATH`; neither `dbeeapp.yaml.example` nor the testbed file is auto-discovered.
 
 ## Exit Codes

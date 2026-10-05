@@ -3,6 +3,7 @@ import io
 import re
 import tempfile
 import unittest
+from collections import deque
 from pathlib import Path
 
 from dbeeapp.engine import WorkflowEngine
@@ -20,6 +21,10 @@ class FakeCursor:
         self.connection.executed.append((sql, params))
         if "FAIL" in sql:
             raise ValueError("secret driver detail")
+        if "EMIT_NOTICE" in sql:
+            self.connection.notices.append({
+                "S": "NOTICE", "V": "NOTICE", "M": "procedure progress", "D": "must not leak",
+            })
         if sql.startswith("DECLARE"):
             sql = sql.split(" CURSOR FOR ", 1)[1]
         if sql.startswith("SELECT"):
@@ -54,6 +59,7 @@ class FakeConnection:
         self.rollbacks = 0
         self.closed = False
         self.stream_fetch_started = False
+        self.notices = deque()
 
     def cursor(self):
         return FakeCursor(self)
@@ -98,6 +104,7 @@ def config():
         "results": {"fetch_batch_size": 10, "max_rows": 100, "max_bytes": 10000, "max_output_bytes": 10000},
         "logging": {"enabled": False, "file": None, "level": "CRITICAL"},
         "failures": {"enabled": False, "file": None, "tag": "failure"},
+        "server_output": {"stdout": True, "file": None, "max_message_bytes": 1000},
     }
 
 
@@ -113,6 +120,15 @@ class WorkflowEngineTests(unittest.TestCase):
         self.template_path.touch()
         self.sessions = FakeSessions()
         self.output = io.StringIO()
+
+    def test_server_notices_are_routed_separately_from_rows(self):
+        self.run_engine([{
+            "id": "procedure_call", "type": "sql", "db": "main", "sql": "SELECT EMIT_NOTICE",
+            "result": {"mode": "none"},
+        }])
+        self.assertIn("[PostgreSQL NOTICE]", self.output.getvalue())
+        self.assertIn("procedure progress", self.output.getvalue())
+        self.assertNotIn("must not leak", self.output.getvalue())
 
     def run_engine(self, steps, variables=None):
         document = {"job": {"id": "engine_test"}, "variables": variables or {}, "databases": database(), "steps": steps}

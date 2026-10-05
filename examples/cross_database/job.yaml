@@ -3,7 +3,7 @@ job:
   id: cross_database_status
   description: Control to reporting to control using both reusable sessions
 variables:
-  application: TEST_APP
+  application: SAMPLE_APP_001
 databases:
   control:
     host: 127.0.0.1
