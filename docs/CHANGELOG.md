@@ -11,6 +11,6 @@ All notable changes are recorded here. The public source repository is active; n
 - Added ten examples and a two-instance PostgreSQL testbed with unit and opt-in integration tests.
 - Runtime dependency code is vendored locally, and examples now use one folder per job with an adjacent `sql/` folder.
 - Added application YAML provider defaults with per-database override precedence; renamed config templates to `dbeeapp.yaml.example` and `dbeeapp.testbed.yaml`.
-- Expanded `steps[].result.mode` documentation with mode-specific shapes, empty behavior, limits, and stream requirements; `first` and `scalar` now avoid retaining unnecessary rows.
+- Expanded `steps[].result.mode` documentation with mode-specific shapes, empty behavior, limits, and stream requirements; `first` and `scalar` now avoid retaining unnecessary rows. Final suite: 78 tests passed, including five PostgreSQL integration tests.
 - Recorded architecture, security, session, provider protocol, offline deployment, user and developer guidance.
 - The initial implementation is published but not RHEL/CyberArk certified; see `docs/PROGRESS.md` for outstanding release gates.

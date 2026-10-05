@@ -12,7 +12,7 @@
 - All ten job templates pass CLI validation under Python 3.9.6 with `-S`.
 - Provider defaults can be configured centrally in application YAML, with per-database `credential.options` taking precedence. `dbeeapp.yaml.example` is an inert production-oriented template; `dbeeapp.testbed.yaml` is explicitly local-only.
 - All five live PostgreSQL integration tests pass under Python 3.9.6 with `-S` against two PostgreSQL 16.4 containers.
-- Latest full suite: 74 tests passed, 0 failed under Python 3.9.6 with `-S`, including five live PostgreSQL integration tests.
+- Latest full suite: 78 tests passed, 0 failed under Python 3.9.6 with `-S`, including five live PostgreSQL integration tests.
 - `compileall`, editor diagnostics, and a high-confidence token/private-key pattern scan passed.
 - Public repository `https://github.com/lukas-meszaros/DBeeApp` is on `main`. No certified release tag exists.
 
