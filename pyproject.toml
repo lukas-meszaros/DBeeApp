@@ -9,16 +9,24 @@ description = "Declarative PostgreSQL workflow runner for secure and offline env
 readme = "README.md"
 requires-python = ">=3.9"
 license = "MIT"
-dependencies = [
-  "pg8000==1.31.5",
-  "PyYAML==6.0.2",
+dependencies = []
+classifiers = [
+	"Programming Language :: Python :: 3",
+	"Programming Language :: Python :: 3.9",
+	"Programming Language :: Python :: 3.13",
+	"Operating System :: POSIX :: Linux",
 ]
 
 [project.scripts]
 dbeeapp = "dbeeapp.cli:main"
 
 [tool.setuptools]
-packages = ["dbeeapp"]
+include-package-data = true
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["dbeeapp", "dbeeapp._vendor", "dbeeapp._vendor.*"]
+exclude = ["dbeeapp._vendor.*.__pycache__", "dbeeapp._vendor.*.*.__pycache__", "dbeeapp._vendor.*.*.*.__pycache__"]
 
 [tool.setuptools.data-files]
 "share/dbeeapp/providers" = ["providers/dummy.py", "providers/cyberark_aim.py"]

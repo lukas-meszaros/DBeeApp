@@ -1,39 +1,42 @@
-# Offline Installation
+# Local Runtime Libraries
 
-## Dependency Policy
+## Runtime Policy
 
-Production dependencies are pinned exactly in `requirements-runtime.txt` and include the full transitive closure. Development/test tools are separate. The release wheelhouse is generated for the target RHEL architecture and Python minor version; Python wheels are not assumed portable across every ABI/platform. The install set is hashed and transferred through the organization's approved artifact channel. Production installation never contacts PyPI.
+DBeeApp does not install runtime Python libraries into the interpreter, a virtual environment, or system `site-packages`. The application source includes the pure-Python modules it needs under `dbeeapp/_vendor`, plus upstream license texts and wheel metadata. `dbeeapp/__init__.py` puts that local directory first on `sys.path` before importing the CLI or database stack.
 
-Runtime pins are pg8000 1.31.5, PyYAML 6.0.2, scramp 1.4.6, asn1crypto 1.5.1, python-dateutil 2.9.0.post0, and six 1.17.0. The scramp pin is deliberately 1.4.6 because 1.4.17 requires Python 3.10+, while this package declares Python >=3.9. A CPython 3.9 `manylinux2014_x86_64` wheel resolution succeeded; the RHEL runtime itself has not yet been exercised.
+The runtime pins are pg8000 1.31.5, PyYAML 6.0.2, scramp 1.4.6, asn1crypto 1.5.1, python-dateutil 2.9.0.post0, and six 1.17.0. PyYAML's optional compiled extension is excluded; its pure-Python implementation is used. Tests run with Python's `-S` option to prove runtime imports do not depend on installed packages.
 
-## Connected Staging Host
+`requirements-runtime.txt` is a source-wheel acquisition manifest for maintainers. It is not an installation requirements file and must not be passed to `pip install`.
 
-Use a Python interpreter matching the target RHEL version/architecture and a clean virtual environment. Download exact pinned requirements and all dependencies:
+## Refresh the Vendor Tree
 
-```sh
-python3 -m venv .venv
-.venv/bin/python -m pip download --only-binary=:all: --dest wheelhouse -r requirements-runtime.txt
-.venv/bin/python -m pip download --only-binary=:all: --dest wheelhouse -r requirements-dev.txt
-shasum -a 256 wheelhouse/* > SHA256SUMS
-```
-
-Create a SHA-256 manifest for every artifact and verify package metadata/dependency closure. Transfer `SHA256SUMS` alongside the wheelhouse, then verify with `shasum -a 256 -c SHA256SUMS` from the directory containing the downloaded wheels. If a dependency has no compatible wheel for the target, build/wheel it on a compatible staging host; do not fall back to runtime downloads. Do not mix development dependencies into production's install command.
-
-## Transfer and Install
-
-Transfer the source release, runtime wheelhouse, and manifest using approved media. Verify the manifest before installation. Install with network access disabled and dependency resolution constrained to local artifacts:
+On a connected staging workstation, download wheels into a local wheelhouse. `pip download` only saves archives; it does not install the packages:
 
 ```sh
-shasum -a 256 -c SHA256SUMS
-python3 -m venv /opt/dbeeapp/venv
-/opt/dbeeapp/venv/bin/python -m pip install --no-index --find-links ./wheelhouse --requirement requirements-runtime.txt
-/opt/dbeeapp/venv/bin/python -m pip install --no-index --no-deps ./DBeeApp-*.whl
+python3 -m pip download --only-binary=:all: --dest wheelhouse -r requirements-runtime.txt
+python3 tools/vendor_runtime.py --wheelhouse wheelhouse
 ```
 
-Verify installed versions using `pip list --format=freeze` and a CLI version invocation. Do not copy a virtual environment from another host; recreate it on the target interpreter.
+The vendor tool requires exactly one wheel for each pinned distribution, extracts only package source, `.dist-info` version metadata, and license files, and discards native extensions. It does not invoke pip or perform network access. Review the generated diff and upstream licenses after any refresh. Run:
 
-For an offline developer build, stage the pinned development closure too, install `requirements-dev.txt` from the local wheelhouse, then run `.venv/bin/python -m build --no-isolation`. The production wheelhouse does not contain build/test dependencies.
+```sh
+python3 -S -m dbeeapp version
+python3 -S -m unittest discover -s tests -v
+```
 
-## Verify and Operate
+Build/test front-end tool pins are recorded separately under `requirements-dev.txt`; they are not runtime imports and are not needed to run tests. A release builder may use its pre-provisioned packaging tools, but the target application does not install Python libraries.
 
-Test the installation with `dbeeapp version`, `validate`, and `describe` against test templates, then run a controlled test database workflow. Verify TLS trust files, provider directory permissions, and no-network operation. Keep the manifest, interpreter/platform identity, and source release checksum with deployment records.
+## Transfer and Run
+
+Transfer the source release (including `dbeeapp/_vendor`) through the approved channel. No wheelhouse or internet connection is required on the target. Use a supported Python interpreter and run directly from the application source directory:
+
+```sh
+python3 -S -m dbeeapp version
+python3 -S -m dbeeapp validate examples/basic_query/job.yaml
+python3 -S -m dbeeapp describe examples/basic_query/job.yaml
+python3 -S -m dbeeapp run examples/basic_query/job.yaml
+```
+
+`-S` is optional in normal use; it disables site initialization and is useful for verifying that runtime packages are sourced only from the bundled vendor directory. Do not copy a Python virtual environment between machines. Place the application/provider files in administrator-controlled locations and configure the approved provider directory.
+
+The vendored tree is interpreter-independent pure Python. CPython 3.9 manylinux wheel availability and local macOS Python 3.13 runtime execution have been checked; an actual RHEL host remains to be certified.

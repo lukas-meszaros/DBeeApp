@@ -1,6 +1,6 @@
 # Template Specification v1
 
-This is the contract for YAML workflow templates. A template is data, never executable code. YAML aliases/tags other than standard safe YAML values are not part of the contract. Unknown properties and duplicate keys are errors. Exactly one YAML document is accepted.
+This is the contract for YAML workflow templates. A template is data, never executable code. Each job resides in its own directory, conventionally as `job.yaml`, and any related external SQL is under that directory's `sql/` folder. SQL paths resolve against the job file's parent directory. YAML aliases/tags other than standard safe YAML values are not part of the contract. Unknown properties and duplicate keys are errors. Exactly one YAML document is accepted.
 
 ## Top Level
 

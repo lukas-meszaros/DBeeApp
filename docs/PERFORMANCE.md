@@ -14,6 +14,6 @@ One run per scenario was measured locally; these are sanity observations, not st
 | Sequential SQL | 0.15 s | 0.08 s | 0.02 s | 20 bound SELECT steps on a reused reporting session |
 | Streamed output | 0.14 s | 0.10 s | 0.02 s | 10,000 rows to JSONL using server-side cursor |
 
-Environment: macOS 26.6.2 arm64, Python 3.13.13, Docker PostgreSQL 16.4 (Debian image), pg8000 1.31.5, local loopback connections. Containers were warm. Peak RSS and repeated-run distributions were not measured. Do not use these numbers to estimate RHEL or remote-database performance.
+Environment: macOS 26.6.2 arm64, Python 3.13.13, Docker PostgreSQL 16.4 (Debian image), vendored pg8000 1.31.5, local loopback connections. Containers were warm. Peak RSS and repeated-run distributions were not measured. Do not use these numbers to estimate RHEL or remote-database performance.
 
 For stronger results, repeat with warm/cold runs and record median/range and peak RSS. See `TESTING.md` for the testbed and workflow commands.

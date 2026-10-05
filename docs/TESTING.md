@@ -14,9 +14,9 @@
 ## Commands
 
 ```sh
-.venv/bin/python -m unittest discover -s tests -v
+python3 -S -m unittest discover -s tests -v
 docker compose -f testbed/compose.yaml up -d
-DBEEAPP_INTEGRATION=1 .venv/bin/python -m unittest discover -s tests -v
+DBEEAPP_INTEGRATION=1 python3 -S -m unittest discover -s tests -v
 docker compose -f testbed/compose.yaml down
 ```
 
@@ -24,7 +24,7 @@ No `down -v` command should be required for normal runs; volumes are local dispo
 
 ## Session Assertions
 
-Use `SELECT pg_backend_pid()` to prove reuse, switching, new connections, per-step override identities, and identical transaction-child session identity. Verify `pg_temp` table visibility for reuse and absence for a new session. Stream a large parameterized SELECT through a server-side cursor into JSONL/CSV and check row count and bounded output. `examples/many_sequential_steps.yaml` provides a 20-query reusable-session workload for timing checks. Force a SQL error inside a transaction and verify prior DML is rolled back and later child SQL is not invoked. Instrument fake connections for closure on all failure paths.
+Use `SELECT pg_backend_pid()` to prove reuse, switching, new connections, per-step override identities, and identical transaction-child session identity. Verify `pg_temp` table visibility for reuse and absence for a new session. Stream a large parameterized SELECT through a server-side cursor into JSONL/CSV and check row count and bounded output. `examples/many_sequential_steps/job.yaml` provides a 20-query reusable-session workload for timing checks. Force a SQL error inside a transaction and verify prior DML is rolled back and later child SQL is not invoked. Instrument fake connections for closure on all failure paths. Runtime imports must also pass under `python -S` so installed `site-packages` cannot mask missing vendored modules.
 
 ## Release Evidence
 

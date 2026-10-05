@@ -2,7 +2,9 @@
 
 ## Scope
 
-DBeeApp is a short-lived, single-process, sequential PostgreSQL workflow runner. The runtime uses Python standard-library facilities plus pinned PyYAML and pg8000. No server, pool, scheduler, ORM, worker threads, or background process is part of v1.
+DBeeApp is a short-lived, single-process, sequential PostgreSQL workflow runner. Runtime dependencies are vendored pure-Python source under `dbeeapp/_vendor`; the CLI loads them from that local directory and does not install them into the interpreter. No server, pool, scheduler, ORM, worker threads, or background process is part of v1.
+
+The runtime dependency source and required notices ship in the source tree/package. `requirements-runtime.txt` is an exact-pin maintenance manifest for sourcing local wheels only; it is never an installation command. `tools/vendor_runtime.py` extracts package modules, `.dist-info` metadata needed by libraries, and license files, while excluding native extensions.
 
 ## Components and Lifecycle
 
@@ -24,7 +26,7 @@ flowchart TD
 ```
 
 1. Parse CLI arguments and load optional application config.
-2. Load exactly one YAML document with safe parsing, aliases/tags rejection, and duplicate-key rejection.
+2. Bootstrap `dbeeapp/_vendor` on `sys.path`, then load exactly one YAML document with safe parsing, aliases/tags rejection, and duplicate-key rejection.
 3. Validate version, shape, fields, references, file paths, session/transaction combinations, result and output modes. Validation must not invoke credentials or contact PostgreSQL.
 4. For a run only, create the execution context, execute steps in listed order, and write outputs.
 5. In a `finally` path, attempt closure of every registered reusable and temporary connection even if one close fails.

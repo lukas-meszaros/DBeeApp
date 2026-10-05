@@ -2,7 +2,7 @@
 
 **Declarative PostgreSQL workflow runner for secure/offline environments.**
 
-DBeeApp is a lightweight Python CLI for ordered PostgreSQL workflows described in YAML. It uses pg8000, binds SQL values separately, reuses database sessions by default, supports trusted password-provider scripts, and is designed for deployment without runtime internet access.
+DBeeApp is a lightweight Python CLI for ordered PostgreSQL workflows described in YAML. It uses locally vendored pg8000/PyYAML and their pure-Python dependencies, binds SQL values separately, reuses database sessions by default, supports trusted password-provider scripts, and runs without installing runtime libraries into Python or accessing the network.
 
 Repository: [lukas-meszaros/DBeeApp](https://github.com/lukas-meszaros/DBeeApp)
 
@@ -32,12 +32,14 @@ steps:
 ```
 
 ```sh
-dbeeapp validate job.yaml
-dbeeapp describe job.yaml
-dbeeapp run job.yaml
+python3 -S -m dbeeapp validate job.yaml
+python3 -S -m dbeeapp describe job.yaml
+python3 -S -m dbeeapp run job.yaml
 ```
 
-Implemented features include YAML workflows, PostgreSQL with pg8000, offline dependency bundles, pluggable password providers including CyberArk AIM, safe bound parameters, lazy reusable and isolated sessions, explicit transaction groups, conditions, bounded results, and file/stdout outputs.
+From a source checkout, run `python -m dbeeapp ...`. Runtime library modules are included under `dbeeapp/_vendor` and loaded from that directory; no `pip install` of runtime requirements is needed. For the expected job-directory layout, see the folders under [examples](examples/).
+
+Implemented features include YAML workflows, PostgreSQL with locally sourced pg8000, no runtime package installation, pluggable password providers including CyberArk AIM, safe bound parameters, lazy reusable and isolated sessions, explicit transaction groups, conditions, bounded results, and file/stdout outputs.
 
 The initial implementation is available in this checkout. RHEL certification and CyberArk version-specific integration are still outstanding; see [Project Progress](docs/PROGRESS.md) for verified status and [Offline Installation](docs/OFFLINE_INSTALLATION.md) for the tested local-wheelhouse workflow.
 

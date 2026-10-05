@@ -17,5 +17,6 @@ dist/
 !.env.example
 wheelhouse/
 .offline-check*/
+.app-only*/
 SHA256SUMS
 testbed/.data/

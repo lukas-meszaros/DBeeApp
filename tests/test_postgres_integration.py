@@ -4,14 +4,14 @@ import os
 import unittest
 from pathlib import Path
 
-import pg8000.dbapi
-
+import dbeeapp
 from dbeeapp.config import load_config
 from dbeeapp.engine import WorkflowEngine
 from dbeeapp.errors import TransactionError
 from dbeeapp.sessions import SessionManager
 from dbeeapp.template_loader import load_yaml
 from dbeeapp.validator import validate_template
+import pg8000.dbapi
 
 
 ROOT = Path(__file__).resolve().parents[1]
@@ -88,13 +88,13 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
 
     def test_example_templates_execute_end_to_end(self):
         example_names = (
-            "basic_query.yaml", "cross_database.yaml", "external_sql.yaml", "conditional.yaml",
-            "transaction_commit.yaml", "session_state.yaml", "session_override.yaml", "large_result_stream.yaml",
-            "many_sequential_steps.yaml",
+            "basic_query", "cross_database", "external_sql", "conditional",
+            "transaction_commit", "session_state", "session_override", "large_result_stream",
+            "many_sequential_steps",
         )
         for example_name in example_names:
             with self.subTest(example=example_name):
-                path = ROOT / "examples" / example_name
+                path = ROOT / "examples" / example_name / "job.yaml"
                 document = validate_template(load_yaml(path), path, config=self.config)
                 output = io.StringIO()
                 engine = WorkflowEngine(document, path, self.config, stdout=output)
@@ -115,7 +115,7 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                 ],
             }],
         }
-        engine = WorkflowEngine(document, ROOT / "examples" / "basic_query.yaml", self.config, stdout=io.StringIO())
+        engine = WorkflowEngine(document, ROOT / "examples" / "basic_query" / "job.yaml", self.config, stdout=io.StringIO())
         self.assertEqual(engine.run(), 0)
         self.assertEqual(engine.context["steps"]["pid_first"]["scalar"], engine.context["steps"]["pid_second"]["scalar"])
         self.assertEqual(engine.sessions.reusable, {})
@@ -131,7 +131,7 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                 cursor.close()
         finally:
             manager.close_all()
-        path = ROOT / "examples" / "transaction_rollback.yaml"
+        path = ROOT / "examples" / "transaction_rollback" / "job.yaml"
         document = validate_template(load_yaml(path), path, config=self.config)
         engine = WorkflowEngine(document, path, self.config, stdout=io.StringIO())
         with self.assertRaises(TransactionError):
@@ -159,7 +159,7 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                 {"id": "after_timeout", "type": "sql", "db": "control", "sql": "SELECT 1 AS value", "result": {"mode": "scalar"}},
             ],
         }
-        engine = WorkflowEngine(document, ROOT / "examples" / "basic_query.yaml", self.config, stdout=io.StringIO())
+        engine = WorkflowEngine(document, ROOT / "examples" / "basic_query" / "job.yaml", self.config, stdout=io.StringIO())
         self.assertEqual(engine.run(), 0)
         self.assertEqual(engine.context["steps"]["slow"]["error_category"], "sql_timeout")
         self.assertEqual(engine.context["steps"]["after_timeout"]["scalar"], 1)

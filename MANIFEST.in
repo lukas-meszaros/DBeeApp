@@ -1,8 +1,13 @@
 include README.md
 include LICENSE
-include requirements-runtime.txt
 recursive-include providers *.py
+recursive-include dbeeapp/_vendor *
 recursive-include docs *.md
-recursive-include examples *.yaml *.sql
+recursive-include examples *.yaml *.sql .gitkeep
 recursive-include config *.yaml
 recursive-include testbed *.yaml *.sql
+include requirements-runtime.txt
+include tools/vendor_runtime.py
+global-exclude *.py[cod]
+recursive-include tests *.py
+include tools/vendor_runtime.py

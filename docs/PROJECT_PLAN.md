@@ -13,7 +13,7 @@ Deliver DBeeApp as a small, secure, documented Python CLI that runs declarative 
 5. **Workflow and results**: sequential SQL, controlled placeholders/conditions, result modes and bounded streaming, named variables, error policies, per-statement transaction boundaries.
 6. **Transactions**: same-connection atomic groups; rollback on child error; no cross-database/new-session children; stop execution after transaction loss.
 7. **Outputs and observability**: stdout/file, text/CSV/JSON/JSONL, append/overwrite, structured non-secret logs and failure events.
-8. **Testbed and examples**: two isolated PostgreSQL services; seeded deterministic fixtures; at least five working examples; explicit session-state/session-isolation cases.
+8. **Testbed and examples**: two isolated PostgreSQL services; seeded deterministic fixtures; at least five working examples, each in its own directory with `job.yaml` and `sql/`; explicit session-state/session-isolation cases.
 9. **Documentation and offline packaging**: user/developer/provider/security/session/testing/offline guides, wheelhouse workflow and hash verification, changelog and file index.
 10. **Release validation**: unit, integration, security, CLI, lint/type checks, example runs, secret scan, repository review, public repository creation only after all gates pass.
 
@@ -30,6 +30,8 @@ Deliver DBeeApp as a small, secure, documented Python CLI that runs declarative 
 ## Decisions to Record
 
 - Use pg8000 DB-API named style `:parameter` for parameter values; SQL identifiers are not substitutable.
+- Vendor pinned pure-Python runtime packages in the source tree; do not install third-party libraries into runtime Python environments.
+- Each workflow lives at `<job-folder>/job.yaml`; external SQL files live at `<job-folder>/sql/...`.
 - Use PyYAML SafeLoader with duplicate-key rejection and strict unknown properties.
 - Provider scripts are administrator-approved standalone scripts; names only, no template paths.
 - Connection retry may occur only before SQL is dispatched when known; SQL execution is not retried in v1.

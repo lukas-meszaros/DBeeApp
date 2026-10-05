@@ -6,12 +6,11 @@ Read `CLAUDE.md`, `FILE_INDEX.md`, `ARCHITECTURE.md`, `TEMPLATE_SPEC_V1.md`, and
 
 ## Environment
 
-The supported Python floor is to be confirmed against the pinned dependency set and target RHEL release. Use an isolated venv and install development dependencies from a connected staging environment. Production installs use only the runtime lock and wheelhouse.
+Runtime libraries are already included under `dbeeapp/_vendor`; do not install `requirements-runtime.txt` or any runtime package. Run DBeeApp and tests directly with Python; `-S` disables site initialization and verifies the vendor tree is sufficient. `requirements-dev.txt` is a pin/reference list for optional build front ends, not needed to run the application or tests.
 
 ```sh
-python3 -m venv .venv
-.venv/bin/python -m pip install -r requirements-dev.txt
-.venv/bin/python -m unittest discover -s tests -v
+python3 -S -m unittest discover -s tests -v
+python3 -S -m dbeeapp version
 ```
 
 ## Code Boundaries
@@ -36,4 +35,4 @@ Run all unit tests and applicable integration tests. Report skipped integration 
 
 ## Dependency and Release Changes
 
-Update exact pins and full transitive lock together. Regenerate artifacts on a compatible target platform, compute and verify SHA-256 hashes, and test installation with `--no-index`. Do not add a runtime dependency without explaining why the standard library or current dependencies are insufficient. Never commit secrets, generated wheelhouse, local venvs, database volumes, logs, or credentials.
+Update exact pins and the vendor tree together. On a connected maintenance workstation, use `pip download` to fill a local wheelhouse, then run `tools/vendor_runtime.py`; this downloads archives but does not install runtime libraries. Verify the source/versions/licenses and add a `python -S` test. Do not add a runtime dependency without explaining why the standard library or current dependencies are insufficient. Never commit unneeded wheelhouse archives, local venvs, database volumes, logs, or credentials.

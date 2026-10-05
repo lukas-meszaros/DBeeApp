@@ -16,6 +16,8 @@ DBeeApp is a short-lived, sequential Python CLI for declarative PostgreSQL workf
 
 Templates are data, never code. Use safe YAML loading, strict unknown-field rejection, named DB-API parameters, safe template-relative SQL paths, and an administrator-controlled provider directory with validated names. Never place a password in workflow context, output, errors, logs, argv, or provider stderr. Provider scripts are trusted executable code installed by an administrator. Do not expose raw third-party exception text without reviewing it for secrets.
 
+Runtime Python libraries are vendored under `dbeeapp/_vendor`; never add a runtime pip-install step. Refresh them only from exact local wheel pins using `tools/vendor_runtime.py`, preserve licenses, and verify imports under `python -S`.
+
 ## Database Rules
 
 `session.mode: reuse` lazily opens and retains one connection per database ID until job cleanup. `new` opens an isolated connection for one operation and closes it without replacing the reusable connection. Session lifetime and transaction boundaries are distinct. Transaction groups must use one database and one connection; a child failure rolls the group back and prevents later children. Never automatically repeat SQL after execution may have begun. A lost connection invalidates that session; do not silently reconnect and continue a workflow.
@@ -30,11 +32,11 @@ Update `docs/PROGRESS.md` after meaningful milestones and keep `docs/FILE_INDEX.
 
 ## Commands
 
-- Create venv: `python3 -m venv .venv`
-- Install dev requirements: `.venv/bin/python -m pip install -r requirements-dev.txt`
-- Unit tests: `.venv/bin/python -m unittest discover -s tests -v`
+- Unit tests without site packages: `python3 -S -m unittest discover -s tests -v`
 - Start integration DBs: `docker compose -f testbed/compose.yaml up -d`
-- CLI from checkout: `.venv/bin/python -m dbeeapp`
+- CLI from checkout: `python3 -S -m dbeeapp`
+- Verify local runtime dependencies without site packages: `python3 -S -m dbeeapp version`
+- Refresh vendored libraries from local wheel files: `python3 tools/vendor_runtime.py --wheelhouse wheelhouse --replace`
 
 ## Ownership Map
 

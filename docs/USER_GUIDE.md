@@ -2,24 +2,24 @@
 
 ## Status
 
-This guide describes the intended Template Specification v1. The application is under development; consult `PROGRESS.md` before relying on features as implemented.
+This guide describes Template Specification v1. Consult `PROGRESS.md` for the verified feature set and remaining target-environment limitations.
 
 ## Install and Run
 
-The production installation is designed for a prebuilt local wheelhouse. See `OFFLINE_INSTALLATION.md`. The CLI commands are:
+Runtime Python libraries are bundled in `dbeeapp/_vendor`; no runtime `pip install` is performed. From a source checkout or extracted source bundle, invoke the module directly:
 
 ```sh
-dbeeapp version
-dbeeapp validate templates/job.yaml
-dbeeapp describe templates/job.yaml
-dbeeapp run templates/job.yaml
+python3 -S -m dbeeapp version
+python3 -S -m dbeeapp validate templates/my_job/job.yaml
+python3 -S -m dbeeapp describe templates/my_job/job.yaml
+python3 -S -m dbeeapp run templates/my_job/job.yaml
 ```
 
-`validate` checks configuration and template statically without requesting passwords or connecting. `describe` prints job/database/step/session metadata and never secrets. `run` validates fully, then executes steps in order. Errors go to stderr; step output goes to its configured target. Exit codes are listed in `TEMPLATE_SPEC_V1.md`.
+`validate` checks configuration and template statically without requesting passwords or connecting. `describe` prints job/database/step/session metadata and never secrets. `run` validates fully, then executes steps in order. Errors go to stderr; step output goes to its configured target. Exit codes are listed in `TEMPLATE_SPEC_V1.md`. `-S` disables Python's site initialization and is useful for verifying runtime dependencies came only from the local vendor tree.
 
 ## Workflow Shape
 
-A template begins with `version: 1`, a job ID, optional variables, database definitions, and ordered steps. Unknown keys are errors. A step can use only earlier step results; v1 does not have parallel steps or a dependency graph.
+A template begins with `version: 1`, a job ID, optional variables, database definitions, and ordered steps. Keep each job in its own directory as `job.yaml`; store related SQL files in that job's `sql/` directory. Unknown keys are errors. A step can use only earlier step results; v1 does not have parallel steps or a dependency graph.
 
 ```yaml
 version: 1

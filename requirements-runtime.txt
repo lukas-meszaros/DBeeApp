@@ -1,3 +1,5 @@
+# Source-wheel acquisition manifest only. Never install these packages with pip.
+# Populate dbeeapp/_vendor from a local wheelhouse using tools/vendor_runtime.py.
 pg8000==1.31.5
 PyYAML==6.0.2
 scramp==1.4.6

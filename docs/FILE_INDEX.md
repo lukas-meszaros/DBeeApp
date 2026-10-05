@@ -8,9 +8,9 @@ This index reflects the current project structure and implemented ownership boun
 | --- | --- | --- |
 | `CLAUDE.md` | Required AI continuation instructions and project invariants. | Update if workflow/security/testing conventions change. |
 | `README.md` | First-use overview and quick start. | Links to user/spec/security/offline documentation. |
-| `pyproject.toml` | Package metadata, CLI entry point, runtime dependency pins. | Modify when packaging/API/dependencies change. |
-| `requirements-runtime.txt` | Exact production dependency closure. | Update with dependency lock and wheelhouse instructions. |
-| `requirements-dev.txt` | Development/test dependencies only. | Keep separate from production. |
+| `pyproject.toml` | Package metadata, CLI entry point, and build requirements; runtime dependencies are vendored. | Modify when packaging/API/dependencies change. |
+| `requirements-runtime.txt` | Exact source-wheel acquisition manifest used to regenerate local vendored code; never pip-install it. | Update together with `tools/vendor_runtime.py` and vendored tree. |
+| `requirements-dev.txt` | Optional pinned build-tool reference; not needed to run app or tests. | Keep third-party tooling out of runtime. |
 | `MANIFEST.in` | Source package inclusion rules. | Update when packaged assets/providers change. |
 | `.gitignore` | Excludes local envs, secrets, logs, coverage/build artifacts. | Review before release. |
 
@@ -28,7 +28,7 @@ This index reflects the current project structure and implemented ownership boun
 | `docs/SECURITY.md` | Threat model, secret handling, trusted code boundary. | Security changes and release review. |
 | `docs/TESTING.md` | Unit/integration/security testing and testbed commands. | Test strategy/service changes. |
 | `docs/PERFORMANCE.md` | Performance goals and local benchmark observations. | Update after repeated measurements or result/session design changes. |
-| `docs/OFFLINE_INSTALLATION.md` | Locked, hash-verified offline wheelhouse workflow. | Runtime dependencies/install procedure change. |
+| `docs/OFFLINE_INSTALLATION.md` | Local vendored runtime source workflow and no-install execution. | Runtime dependency/source procedure change. |
 | `docs/USER_GUIDE.md` | User-facing workflow creation and CLI guide. | CLI/template feature changes. |
 | `docs/DEVELOPER_GUIDE.md` | Contributor architecture, tests, coding workflow. | Development conventions change. |
 | `docs/CHANGELOG.md` | User-visible changes by release. | Every release or notable change. |
@@ -56,6 +56,9 @@ This index reflects the current project structure and implemented ownership boun
 | File | Purpose / ownership | Tests |
 | --- | --- | --- |
 | `dbeeapp/__init__.py`, `dbeeapp/__main__.py` | Version and `python -m dbeeapp` entry point. | `tests/test_cli.py` |
+| `dbeeapp/_vendor/` | Checked-in pure-Python runtime dependencies and license metadata, loaded from local source without `site-packages`. | Regenerate with `tools/vendor_runtime.py` after dependency pin changes; test with Python `-S`. |
+| `tools/vendor_runtime.py` | Unpacks exact local wheels into the vendor tree and preserves runtime metadata/licenses. | Run only for deliberate dependency refreshes; requires a local wheelhouse and `--replace` to replace an existing tree. |
+| `tools/vendor_runtime.py` | Unpacks exact wheels from a local wheelhouse into the source vendor tree; excludes native extension binaries and retains `.dist-info` and licenses. | Vendoring/dependency refresh only. |
 | `dbeeapp/cli.py` | CLI commands, static preflight, exit status and dry-run. | `tests/test_cli.py` |
 | `dbeeapp/config.py` | Application-level operational config and defaults, including default session mode. | `tests/test_config.py` |
 | `dbeeapp/template_loader.py` | Bounded safe YAML loader; rejects duplicate keys, aliases and multiple documents. | `tests/test_template_loader.py` |
@@ -77,10 +80,12 @@ This index reflects the current project structure and implemented ownership boun
 | File / path | Purpose |
 | --- | --- |
 | `tests/test_cli.py`, `tests/test_config.py`, `tests/test_template_loader.py`, `tests/test_validator.py` | CLI/config/parser/schema/preflight tests. |
+| `tests/test_vendor_runtime.py` | Confirms vendored runtime imports and CLI work with Python `-S`. |
 | `tests/test_credentials.py` | Provider process protocol, timeout, malformed output and secret diagnostics. |
 | `tests/test_resolver.py`, `tests/test_results.py`, `tests/test_outputs.py` | Values, conditions, limits, stream and output-format tests. |
 | `tests/test_sessions.py`, `tests/test_engine.py`, `tests/test_errors.py` | Fake-DB lifecycle, workflows, transactions, taxonomy. |
 | `tests/test_postgres_integration.py` | Opt-in tests against both live testbed PostgreSQL services. |
 | `testbed/compose.yaml` | Two independent PostgreSQL 16.4 containers bound to loopback ports 55432/55433. |
 | `testbed/init/control.sql`, `testbed/init/reporting.sql` | Test-only roles, schemas and deterministic fixture data. |
-| `examples/*.yaml`, `examples/sql/application_details.sql` | Ten complete workflow templates and their SQL asset, including a 20-step sequential benchmark. |
+| `examples/<job>/job.yaml`, `examples/<job>/sql/` | Ten isolated job folders; external SQL assets live with their job. |
+| `tools/vendor_runtime.py` | Builds the local pure-Python vendor tree from pinned local wheels and preserves licenses/metadata. |
