@@ -91,7 +91,7 @@ External SQL paths cannot escape the template directory; files must be readable 
 
 ## Results and Variables
 
-`result.mode` is one of `none`, `scalar`, `first`, `rows`, or `stream`. Choose the smallest mode that meets the job's needs. Safety caps fail explicitly rather than silently dropping rows. SQL steps expose metadata and available result values under `steps.ID`; `set` explicitly promotes a value into workflow variables under `vars`. Initial variables and resolved results are non-secret workflow data.
+`result.mode` is one of `none`, `scalar`, `first`, `rows`, or `stream`. Choose the smallest mode that meets the job's needs. The exact output shape, empty-result behavior, and applicable `max_rows`/`max_bytes` options for each mode are documented in the [result-mode table](TEMPLATE_SPEC_V1.md#result-modes). Safety caps fail explicitly rather than silently dropping rows. SQL steps expose metadata and available result values under `steps.ID`; `set` explicitly promotes a value into workflow variables under `vars`. Initial variables and resolved results are non-secret workflow data.
 
 `stream` is for row-returning SELECT queries. DBeeApp uses a PostgreSQL server-side cursor and bounded fetch batches, then requires the immediately following step to write CSV or JSONL. The database session remains open until that output drains or closes the stream.
 

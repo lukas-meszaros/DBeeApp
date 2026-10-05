@@ -123,6 +123,18 @@ class TemplateValidatorTests(unittest.TestCase):
         with self.assertRaisesRegex(ValidationError, "immediately following output"):
             self.validate(template)
 
+    def test_result_cap_fields_must_apply_to_selected_mode(self):
+        template = base_template()
+        template["steps"][0]["result"] = {"mode": "none", "max_bytes": 100}
+        with self.assertRaisesRegex(ValidationError, "max_bytes does not apply to mode none"):
+            self.validate(template)
+        template["steps"][0]["result"] = {"mode": "stream", "max_rows": 10}
+        template["steps"].append({
+            "id": "write", "type": "output", "source": "lookup", "target": {"type": "stdout"}, "format": "jsonl",
+        })
+        with self.assertRaisesRegex(ValidationError, "stream limits use application"):
+            self.validate(template)
+
     def test_stream_accepts_adjacent_jsonl_output(self):
         template = base_template()
         template["steps"][0]["result"] = {"mode": "stream"}

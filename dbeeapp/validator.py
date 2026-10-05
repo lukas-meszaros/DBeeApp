@@ -288,6 +288,13 @@ def validate_template(document, template_path, config=None):
             for cap_name in ("max_rows", "max_bytes"):
                 if cap_name in result:
                     _positive_integer(result[cap_name], location + ".result." + cap_name)
+            result_mode = result.get("mode", "none")
+            if result_mode == "none" and "max_bytes" in result:
+                raise ValidationError("{}.result.max_bytes does not apply to mode none".format(location))
+            if result_mode in {"first", "scalar"} and "max_rows" in result:
+                raise ValidationError("{}.result.max_rows does not apply to mode {}".format(location, result_mode))
+            if result_mode == "stream" and ("max_rows" in result or "max_bytes" in result):
+                raise ValidationError("stream limits use application results.max_output_bytes, not result.max_rows/max_bytes")
             if transaction_db and result.get("mode", "none") == "stream":
                 raise ValidationError("stream results are not supported inside transaction groups")
             if result.get("mode", "none") == "stream" and session.get("mode", databases[database_id].get("session", {}).get("mode", global_session_mode)) == "new":

@@ -24,6 +24,7 @@ class ResultTests(unittest.TestCase):
     def test_first_and_rows_modes(self):
         first = collect_result(FakeCursor([(1, "a"), (2, "b")]), "first", self.config)
         self.assertEqual(first["first"], {"value": 1, "label": "a"})
+        self.assertEqual(first["row_count"], 1)
         rows = collect_result(FakeCursor([(1, "a"), (2, "b")]), "rows", self.config)
         self.assertEqual(rows["row_count"], 2)
         self.assertEqual(len(rows["rows"]), 2)
@@ -31,6 +32,28 @@ class ResultTests(unittest.TestCase):
     def test_scalar_shape_is_enforced(self):
         with self.assertRaises(SQLError):
             collect_result(FakeCursor([(1, "a")]), "scalar", self.config)
+
+    def test_first_fetches_only_the_first_row(self):
+        cursor = FakeCursor([(index, "row") for index in range(100)])
+        result = collect_result(cursor, "first", self.config)
+        self.assertEqual(result["first"]["value"], 0)
+        self.assertEqual(len(cursor.rows), 99)
+
+    def test_first_and_scalar_enforce_encoded_byte_limit(self):
+        with self.assertRaisesRegex(SQLError, "byte limit"):
+            collect_result(FakeCursor([(123456,)], description=[("value",)]), "scalar", self.config, {"max_bytes": 1})
+        with self.assertRaisesRegex(SQLError, "byte limit"):
+            collect_result(FakeCursor([(1, "a much longer value")]), "first", self.config, {"max_bytes": 1})
+
+    def test_none_enforces_row_limit_without_retaining_rows(self):
+        config = {"results": {"fetch_batch_size": 2, "max_rows": 100, "max_bytes": 1000}}
+        with self.assertRaisesRegex(SQLError, "row limit"):
+            collect_result(
+                FakeCursor([(index, "row") for index in range(4)]),
+                "none",
+                config,
+                {"max_rows": 2},
+            )
 
     def test_rows_fail_instead_of_truncating(self):
         with self.assertRaisesRegex(SQLError, "safety limit"):

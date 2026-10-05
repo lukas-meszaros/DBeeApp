@@ -48,12 +48,49 @@ All IDs are unique across the entire template, including transaction children. E
 | `sql_file` | relative path | exactly one source | — | Resolved relative to template directory; traversal/symlink escape, unreadable files, non-UTF-8 files, and files over 1 MiB are rejected during validation. |
 | `params` | mapping name to value/reference | no | `{}` | Keys must match named placeholders; values resolve to Python objects and are bound by DB-API; no interpolation. |
 | `result` | mapping | no | `{mode: none}` | Only `mode`, `max_rows`, `max_bytes`; mode `none|scalar|first|rows|stream`. |
-| `result.max_rows` | positive integer | no | configured cap | Hard safety limit; exceeding it errors, never truncates silently. |
-| `result.max_bytes` | positive integer | no | configured cap | Serialized/materialized safety limit. |
+| `result.max_rows` | positive integer | conditional | application `results.max_rows` | Overrides the application row cap for `none` and `rows`. Exceeding it errors; rows are never silently truncated. Rejected for `first`, `scalar`, and `stream`. |
+| `result.max_bytes` | positive integer | conditional | application `results.max_bytes` | Overrides the application encoded-row-byte cap for `first`, `scalar`, and `rows`. Rejected for `none` and `stream`. Exceeding it errors. |
 | `set` | mapping variable name to reference/value | no | `{}` | Evaluated only after success; writes explicit workflow variables under `vars`. |
 | `timeout` | positive number | no | app default | SQL execution timeout, enforced using transaction-local PostgreSQL `statement_timeout`; it is cleared at the transaction boundary and does not make retry safe. |
 
-Result shape: every successful SQL step provides `row_count`, `columns`, `duration`, and `status`; `rows` and `first` exist only when retained by the selected mode. `scalar` requires at most one row and exactly one column when present. `first` is one row mapping or null. `rows` is a list of row mappings. `none` retains no row values. `stream` requires a row-returning SELECT statement, uses a server-side cursor and bounded fetch batches, and must be consumed by the immediately following CSV/JSONL output step on a reusable session. SQL forms unsupported by PostgreSQL cursor declarations fail at execution. Failed and skipped steps have status/error category and no successful result payload.
+### Result Modes
+
+The `result` mapping controls which SQL result data is exposed under `steps.<id>`. If `result` is omitted, its value is `{mode: none}`. `row_count` has mode-specific meaning: for `none` and `rows`, it is the number of returned rows; for `first` and `scalar`, it is the number retained (zero or one); for a statement without a result set, it is the driver's affected-row count when available; for `stream`, it is `null` because DBeeApp does not fetch the entire cursor just to count it. `columns` contains result column names, or an empty list when the statement returned no row set. `duration` is execution duration in seconds; `status` is `success` for a successful SQL step.
+
+| Mode | Data exposed | Empty result | Bounds and behavior | Typical use |
+| --- | --- | --- | --- | --- |
+| `none` | No `rows`, `first`, or `scalar` field. Exposes `row_count` and `columns`. | `row_count: 0` for a query with no rows. | Drains rows without building result mappings. Uses `result.max_rows` or application `results.max_rows`; fails if exceeded. `max_bytes` is invalid. pg8000 may buffer a normal query response internally, so use `stream` for large results. | DML, DDL, or a query whose values are not needed later. |
+| `scalar` | `scalar`: the sole value from one column. | `scalar: null`, `row_count: 0`. | Requires exactly one result column and at most one row. Reads at most two rows to detect a cardinality violation. Encoded scalar row is bounded by `result.max_bytes` or application `results.max_bytes`; `max_rows` is invalid. | One count, identifier, status, or other single value. |
+| `first` | `first`: one row mapping keyed by column name. | `first: null`, `row_count: 0`. | Fetches and retains at most one row; additional rows are not retained or counted. Encoded row is bounded by `result.max_bytes` or application `results.max_bytes`; `max_rows` is invalid. | A lookup expected to return zero or one useful row. |
+| `rows` | `rows`: a list of row mappings keyed by column name. | `rows: []`, `row_count: 0`. | Retains all returned rows up to `result.max_rows`/application `results.max_rows` and `result.max_bytes`/application `results.max_bytes`. Exceeding either limit fails; it never truncates. | Small or bounded result sets reused by later steps or outputs. |
+| `stream` | `stream`: an internal one-pass row iterator; not a reusable value namespace. `row_count: null`. | Empty stream emits no data rows; CSV still writes its header. | Uses a PostgreSQL server-side `NO SCROLL` cursor and application `results.fetch_batch_size`. Must be a row-returning SELECT, use session mode `reuse`, be outside a transaction group, and be consumed by the immediately following output step using `csv` or `jsonl`. The output is bounded by application `results.max_output_bytes`. `result.max_rows` and `result.max_bytes` are invalid. | Large query results written directly to CSV or JSONL without materializing all rows in workflow context. |
+
+Materialized `first`, `scalar`, and `rows` values use the JSON-safe byte-count representation: dates/times become ISO strings, decimals become strings, bytes decode as UTF-8 with replacement, and row mappings are encoded as compact UTF-8 JSON for the cap check. `max_bytes` caps the sum of encoded retained rows, not Python object overhead. `none` does not apply a byte cap because it retains no row values. `stream` uses the output-byte cap while writing.
+
+The application result defaults are `results.fetch_batch_size: 500`, `results.max_rows: 10000`, `results.max_bytes: 10485760` (10 MiB), and `results.max_output_bytes: 10485760` (10 MiB). These are application configuration properties. Per-step `result.max_rows` and `result.max_bytes` override the corresponding materialized-result limits where allowed by the mode table; output size remains governed by `results.max_output_bytes`.
+
+For CSV, stream mode emits a header row followed by one row per fetched result. For JSONL, it emits one JSON object per line. Both drain the stream incrementally; the output step closes the stream/cursor on success or failure. Stream data is not available for later workflow steps because it is a one-pass cursor.
+
+Examples:
+
+```yaml
+# One value
+result: {mode: scalar}
+
+# One useful row, if present
+result: {mode: first}
+
+# Bounded materialization with job-specific ceilings
+result:
+  mode: rows
+  max_rows: 500
+  max_bytes: 2097152
+
+# Large output: this SQL step must be followed immediately by CSV/JSONL output
+result: {mode: stream}
+```
+
+Failed SQL steps expose `status: failure`, `error_category`, and `duration`, without successful result fields. Skipped steps expose `status: skipped` and `duration`.
 
 ### Output Step
 

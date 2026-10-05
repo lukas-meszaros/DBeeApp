@@ -24,6 +24,12 @@ def row_mapping(columns, row):
     return {name: value for name, value in zip(columns, row)}
 
 
+def _check_row_size(row, max_bytes):
+    size = len(json.dumps(row, default=json_default, separators=(",", ":")).encode("utf-8"))
+    if size > max_bytes:
+        raise SQLError("query result exceeds configured byte limit")
+
+
 def collect_result(cursor, mode, config, step_result=None):
     """Collect bounded results or return a batch iterator for streaming output."""
     columns = [description[0] for description in cursor.description or ()]
@@ -65,8 +71,9 @@ def collect_result(cursor, mode, config, step_result=None):
         result["row_count"] = None
         return result
 
-    max_rows = config["results"]["max_rows"]
-    max_bytes = config["results"]["max_bytes"]
+    step_result = step_result or {}
+    max_rows = step_result.get("max_rows", config["results"]["max_rows"])
+    max_bytes = step_result.get("max_bytes", config["results"]["max_bytes"])
     if mode == "none":
         count = 0
         while True:
@@ -77,6 +84,25 @@ def collect_result(cursor, mode, config, step_result=None):
             if count > max_rows:
                 raise SQLError("query result exceeds configured row limit")
         result["row_count"] = count
+        return result
+
+    if mode == "first":
+        rows = cursor.fetchmany(1)
+        result["row_count"] = len(rows)
+        result["first"] = row_mapping(columns, rows[0]) if rows else None
+        if rows:
+            _check_row_size(result["first"], max_bytes)
+        return result
+    if mode == "scalar":
+        if len(columns) != 1:
+            raise SQLError("scalar result requires exactly one column")
+        rows = cursor.fetchmany(2)
+        if len(rows) > 1:
+            raise SQLError("scalar result requires at most one row")
+        result["row_count"] = len(rows)
+        result["scalar"] = rows[0][0] if rows else None
+        if rows:
+            _check_row_size({columns[0]: result["scalar"]}, max_bytes)
         return result
 
     retained = []
@@ -95,12 +121,6 @@ def collect_result(cursor, mode, config, step_result=None):
                 raise SQLError("query result exceeds configured safety limit")
             retained.append(mapped)
     result["row_count"] = len(retained)
-    if mode == "scalar":
-        if len(columns) != 1 or len(retained) > 1:
-            raise SQLError("scalar result requires one column and at most one row")
-        result["scalar"] = retained[0][columns[0]] if retained else None
-    elif mode == "first":
-        result["first"] = retained[0] if retained else None
-    elif mode == "rows":
+    if mode == "rows":
         result["rows"] = retained
     return result

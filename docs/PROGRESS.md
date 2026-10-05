@@ -18,7 +18,7 @@
 
 ## Test Status
 
-- Python 3.9.6, site disabled: 74 tests passed; five live PostgreSQL integration tests included.
+- Python 3.9.6, site disabled: final full run passed 78 tests, including five live PostgreSQL integration tests.
 - PostgreSQL 16.4: both testbed services passed reuse/new/override/temp-state, transaction identity/rollback, timeout recovery, and example workflow tests.
 - Local test containers were stopped after integration validation; named volumes were preserved.
 - Python 3.13.13 also passed earlier validation before the vendoring transition; latest full suite was run on Python 3.9.6.

@@ -133,10 +133,10 @@ class WorkflowEngine:
                     timeout,
                     self.config["results"]["fetch_batch_size"],
                 )
-                result = collect_result(streaming_cursor, mode, self.config)
+                result = collect_result(streaming_cursor, mode, self.config, step.get("result", {}))
             else:
                 execute(cursor, sql, params, timeout)
-                result = collect_result(cursor, mode, self.config)
+                result = collect_result(cursor, mode, self.config, step.get("result", {}))
             if mode == "stream":
                 stream = result["stream"]
 
