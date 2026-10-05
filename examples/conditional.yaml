@@ -1,0 +1,37 @@
+version: 1
+job:
+  id: conditional_status
+  description: Run the follow-up query only when the application is ready
+variables:
+  application: TEST_APP
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_control_test_only}
+steps:
+  - id: state
+    type: sql
+    db: control
+    sql: SELECT status FROM control.applications WHERE application_name = :name
+    params: {name: "{{ vars.application }}"}
+    result: {mode: first}
+  - id: readiness_check
+    type: sql
+    db: control
+    when:
+      equals:
+        left: "{{ steps.state.first.status }}"
+        right: READY
+    sql: SELECT 'application is ready' AS message
+    result: {mode: first}
+  - id: report
+    type: output
+    source: state
+    target: {type: stdout}
+    format: json

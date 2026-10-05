@@ -1,0 +1,10 @@
+postgresql:
+  ssl_mode: disable
+  allow_insecure: true
+
+logging:
+  enabled: false
+  level: WARNING
+
+failures:
+  enabled: false

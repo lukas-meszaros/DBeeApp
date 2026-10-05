@@ -1,0 +1,27 @@
+version: 1
+job:
+  id: streamed_rows
+  description: Stream rows to JSONL without retaining the full result
+databases:
+  reporting:
+    host: 127.0.0.1
+    port: 55433
+    database: reporting
+    user: reporting_user
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_reporting_test_only}
+steps:
+  - id: rows
+    type: sql
+    db: reporting
+    sql: SELECT row_id, label FROM reporting.sample_rows WHERE row_id > :minimum_id ORDER BY row_id
+    params: {minimum_id: 0}
+    result: {mode: stream}
+  - id: jsonl
+    type: output
+    source: rows
+    target: {type: file, path: /tmp/dbeeapp-sample-rows.jsonl}
+    format: jsonl
+    mode: overwrite

@@ -1,0 +1,31 @@
+version: 1
+job:
+  id: transaction_rollback_check
+  description: Expected failure used to verify that earlier transaction changes roll back
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_control_test_only}
+steps:
+  - id: forced_rollback
+    type: transaction
+    db: control
+    steps:
+      - id: temporary_debit
+        type: sql
+        db: control
+        sql: UPDATE control.account SET balance = balance - 999 WHERE account_id = 1
+      - id: deliberate_failure
+        type: sql
+        db: control
+        sql: SELECT * FROM table_that_does_not_exist
+      - id: must_not_run
+        type: sql
+        db: control
+        sql: UPDATE control.account SET balance = 0 WHERE account_id = 2

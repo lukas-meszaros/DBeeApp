@@ -1,0 +1,34 @@
+version: 1
+job:
+  id: reusable_session_state
+  description: A temporary table survives committed steps on one reused PostgreSQL session
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    session: {mode: reuse}
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_control_test_only}
+steps:
+  - id: create_temp
+    type: sql
+    db: control
+    sql: CREATE TEMP TABLE dbeeapp_work (value integer)
+  - id: populate_temp
+    type: sql
+    db: control
+    sql: INSERT INTO dbeeapp_work VALUES (7), (9)
+  - id: read_temp
+    type: sql
+    db: control
+    sql: SELECT value FROM dbeeapp_work ORDER BY value
+    result: {mode: rows}
+  - id: report
+    type: output
+    source: read_temp
+    target: {type: stdout}
+    format: json

@@ -1,0 +1,41 @@
+version: 1
+job:
+  id: isolated_session_override
+  description: A new-session step does not replace the reusable control connection
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    session: {mode: reuse}
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_control_test_only}
+steps:
+  - id: reusable_before
+    type: sql
+    db: control
+    sql: SELECT pg_backend_pid() AS backend_pid
+    result: {mode: scalar}
+    set: {reusable_pid: "{{ steps.reusable_before.scalar }}"}
+  - id: isolated
+    type: sql
+    db: control
+    session: {mode: new}
+    sql: SELECT pg_backend_pid() AS backend_pid
+    result: {mode: scalar}
+    set: {isolated_pid: "{{ steps.isolated.scalar }}"}
+  - id: reusable_after
+    type: sql
+    db: control
+    sql: SELECT pg_backend_pid() AS backend_pid
+    result: {mode: scalar}
+    set: {resumed_pid: "{{ steps.reusable_after.scalar }}"}
+  - id: report
+    type: output
+    source: reusable_after
+    target: {type: stdout}
+    format: text
+    text: "reusable={{ vars.reusable_pid }} resumed={{ vars.resumed_pid }} isolated={{ vars.isolated_pid }}"

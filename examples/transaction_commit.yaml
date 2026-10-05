@@ -1,0 +1,42 @@
+version: 1
+job:
+  id: account_transaction
+  description: Debit, credit, and audit atomically
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_control_test_only}
+steps:
+  - id: transfer
+    type: transaction
+    db: control
+    steps:
+      - id: debit
+        type: sql
+        db: control
+        sql: UPDATE control.account SET balance = balance - 10 WHERE account_id = 1
+      - id: credit
+        type: sql
+        db: control
+        sql: UPDATE control.account SET balance = balance + 10 WHERE account_id = 2
+      - id: audit
+        type: sql
+        db: control
+        sql: INSERT INTO control.audit_log (event_name) VALUES (:event)
+        params: {event: account_transfer}
+  - id: verify
+    type: sql
+    db: control
+    sql: SELECT account_id, balance FROM control.account ORDER BY account_id
+    result: {mode: rows}
+  - id: report
+    type: output
+    source: verify
+    target: {type: stdout}
+    format: json

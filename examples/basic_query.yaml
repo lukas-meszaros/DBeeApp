@@ -1,0 +1,36 @@
+version: 1
+job:
+  id: basic_application_lookup
+  description: Look up one application in the control database
+variables:
+  application: TEST_APP
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    ssl:
+      mode: disable
+    credential:
+      provider: dummy
+      options:
+        password: dbeeapp_control_test_only
+steps:
+  - id: lookup
+    type: sql
+    db: control
+    sql: |
+      SELECT application_id, application_name, status
+      FROM control.applications
+      WHERE application_name = :application
+    params:
+      application: "{{ vars.application }}"
+    result:
+      mode: first
+  - id: report
+    type: output
+    source: lookup
+    target:
+      type: stdout
+    format: json

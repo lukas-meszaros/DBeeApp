@@ -1,0 +1,116 @@
+version: 1
+job:
+  id: many_sequential_queries
+  description: Benchmark sequential SQL operations over one reusable session
+databases:
+  reporting:
+    host: 127.0.0.1
+    port: 55433
+    database: reporting
+    user: reporting_user
+    session: {mode: reuse}
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_reporting_test_only}
+steps:
+  - id: query_01
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 1}
+  - id: query_02
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 2}
+  - id: query_03
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 3}
+  - id: query_04
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 4}
+  - id: query_05
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 5}
+  - id: query_06
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 6}
+  - id: query_07
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 7}
+  - id: query_08
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 8}
+  - id: query_09
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 9}
+  - id: query_10
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 10}
+  - id: query_11
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 11}
+  - id: query_12
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 12}
+  - id: query_13
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 13}
+  - id: query_14
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 14}
+  - id: query_15
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 15}
+  - id: query_16
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 16}
+  - id: query_17
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 17}
+  - id: query_18
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 18}
+  - id: query_19
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 19}
+  - id: query_20
+    type: sql
+    db: reporting
+    sql: SELECT :step_number
+    params: {step_number: 20}

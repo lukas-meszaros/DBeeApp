@@ -1,0 +1,27 @@
+[build-system]
+requires = ["setuptools==80.9.0", "wheel==0.46.3"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "dbeeapp"
+version = "0.1.0"
+description = "Declarative PostgreSQL workflow runner for secure and offline environments"
+readme = "README.md"
+requires-python = ">=3.9"
+license = "MIT"
+dependencies = [
+  "pg8000==1.31.5",
+  "PyYAML==6.0.2",
+]
+
+[project.scripts]
+dbeeapp = "dbeeapp.cli:main"
+
+[tool.setuptools]
+packages = ["dbeeapp"]
+
+[tool.setuptools.data-files]
+"share/dbeeapp/providers" = ["providers/dummy.py", "providers/cyberark_aim.py"]
+
+[tool.unittest]
+start-directory = "tests"

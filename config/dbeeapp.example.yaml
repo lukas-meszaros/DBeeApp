@@ -1,0 +1,33 @@
+provider_dir: /etc/dbeeapp/providers
+
+timeouts:
+  connect: 10
+  provider: 20
+  sql: 60
+
+session:
+  mode: reuse
+
+session:
+  mode: reuse
+
+postgresql:
+  ssl_mode: verify-full
+  ca_file: /etc/pki/tls/certs/ca-bundle.crt
+  allow_insecure: false
+
+results:
+  fetch_batch_size: 500
+  max_rows: 10000
+  max_bytes: 10485760
+  max_output_bytes: 10485760
+
+logging:
+  enabled: true
+  file: /var/log/dbeeapp/dbeeapp.log
+  level: INFO
+
+failures:
+  enabled: true
+  file: /var/log/dbeeapp/failures.log
+  tag: "[DBeeApp_Failure]"

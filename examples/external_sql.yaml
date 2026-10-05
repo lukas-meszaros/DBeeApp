@@ -1,0 +1,29 @@
+version: 1
+job:
+  id: external_sql_csv
+  description: Use a template-relative SQL file and write CSV output
+variables:
+  application: TEST_APP
+databases:
+  control:
+    host: 127.0.0.1
+    port: 55432
+    database: control
+    user: control_user
+    ssl: {mode: disable}
+    credential:
+      provider: dummy
+      options: {password: dbeeapp_control_test_only}
+steps:
+  - id: lookup
+    type: sql
+    db: control
+    sql_file: sql/application_details.sql
+    params: {name: "{{ vars.application }}"}
+    result: {mode: rows}
+  - id: csv
+    type: output
+    source: lookup
+    target: {type: file, path: /tmp/dbeeapp-application-details.csv}
+    format: csv
+    mode: overwrite
