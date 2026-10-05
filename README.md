@@ -37,6 +37,14 @@ python3 -S -m dbeeapp describe job.yaml
 python3 -S -m dbeeapp run job.yaml
 ```
 
+Application config is not auto-discovered. Start from [config/dbeeapp.yaml.example](config/dbeeapp.yaml.example), place the configured copy in an administrator-managed path, then pass it explicitly before the command, for example:
+
+```sh
+python3 -S -m dbeeapp --config /etc/dbeeapp/dbeeapp.yaml validate /path/to/my_job/job.yaml
+```
+
+Shared provider defaults go under `providers.<provider_name>` in that application YAML; database-specific overrides go under `databases.<id>.credential.options` in the job YAML. `config/dbeeapp.testbed.yaml` is only for the local Docker testbed and deliberately disables PostgreSQL TLS verification.
+
 From a source checkout, run `python -m dbeeapp ...`. Runtime library modules are included under `dbeeapp/_vendor` and loaded from that directory; no `pip install` of runtime requirements is needed. For the expected job-directory layout, see the folders under [examples](examples/).
 
 Implemented features include YAML workflows, PostgreSQL with locally sourced pg8000, no runtime package installation, pluggable password providers including CyberArk AIM, safe bound parameters, lazy reusable and isolated sessions, explicit transaction groups, conditions, bounded results, and file/stdout outputs.

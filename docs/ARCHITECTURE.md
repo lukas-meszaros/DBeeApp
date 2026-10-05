@@ -38,7 +38,7 @@ The v1 resolver accepts only complete scalar references such as `{{ vars.name }}
 
 ## Providers
 
-Credential provider IDs are validated simple names and resolved only inside the configured administrator-owned provider directory. Invoke the selected executable as a subprocess using argv (never shell), JSON request on stdin, JSON response on stdout, bounded execution time, and captured stderr that is never copied into user diagnostics. The request contains protocol version, database username, and provider options; the strict response is `{ "version": 1, "password": "..." }`. Nonzero status, timeout, malformed/extra output, invalid UTF-8/JSON, or empty password fail closed. Secret bytes are not logged, included in exceptions, or copied to workflow context.
+Credential provider IDs are validated simple names and resolved only inside the configured administrator-owned provider directory. Application YAML may define shared `providers.<name>` defaults; per-database `credential.options` override them. Invoke the selected executable as a subprocess using argv (never shell), JSON request on stdin, JSON response on stdout, bounded execution time, and captured stderr that is never copied into user diagnostics. The request contains protocol version, database username, and merged provider options; the strict response is `{ "version": 1, "password": "..." }`. Nonzero status, timeout, malformed/extra output, invalid UTF-8/JSON, or empty password fail closed. Secret bytes are not logged, included in exceptions, or copied to workflow context.
 
 ## Database Sessions
 

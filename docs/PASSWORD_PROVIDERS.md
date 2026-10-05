@@ -8,6 +8,8 @@ A provider is an administrator-installed executable script, not a template plugi
 
 DBeeApp starts the provider with a fixed argv (script path only, no secret arguments), `shell=False`, a minimal documented environment, stdin/stdout/stderr pipes, and a configured timeout. Provider-specific non-secret options are supplied as JSON on stdin. Passwords never appear in argv, environment variables, logs, or workflow context.
 
+Provider settings can be declared in either YAML layer. Use application configuration `providers.<provider_name>` for administrator-managed defaults shared by jobs, and `databases.<database_id>.credential.options` for database-specific values. DBeeApp merges them by starting with application defaults and then applying the database options, so database options take precedence. The merged mapping is sent as the protocol `options` object. Secrets returned by a provider are never part of either YAML file.
+
 Request (UTF-8 JSON, exactly one object):
 
 ```json
@@ -45,16 +47,25 @@ Output and input sizes are capped. The child is terminated/killed and reaped on 
 Example options shape:
 
 ```yaml
-credential:
-    provider: cyberark_aim
-    options:
+# config/dbeeapp.yaml
+providers:
+    cyberark_aim:
         base_url: https://vault.example.invalid
         app_id: DBeeApp
-        safe: DB_TEST
-        folder: Root
         account_parameter: Object
         ca_file: /etc/pki/tls/certs/corporate-ca.pem
         timeout: 10
+```
+
+The job YAML can then contain only database-specific lookup settings:
+
+```yaml
+# job.yaml
+credential:
+    provider: cyberark_aim
+    options:
+        safe: DB_TEST
+        folder: Root
 ```
 
 `base_url` is the HTTPS origin/context prefix; the script appends `/AIMWebService/api/Accounts`. `account_parameter` is restricted to `Object` or `UserName`. Confirm these details against the installed AIM release before production use.

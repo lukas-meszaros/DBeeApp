@@ -5,6 +5,7 @@ recursive-include dbeeapp/_vendor *
 recursive-include docs *.md
 recursive-include examples *.yaml *.sql .gitkeep
 recursive-include config *.yaml
+include config/dbeeapp.yaml.example
 recursive-include testbed *.yaml *.sql
 include requirements-runtime.txt
 include tools/vendor_runtime.py

@@ -65,6 +65,10 @@ Every database declares host, database name, user, credential provider, and opti
 
 Application configuration may set a global `session.mode` default. A database-level `session.mode` overrides it, and an individual SQL step may request `new` without replacing an existing reusable connection. Transactions require a reusable database session.
 
+Provider defaults are also application-configurable. Put shared provider settings under `providers.<provider_name>` in the application config, then use each database's `credential.options` for job-specific settings. Per-database options override application defaults. The file [config/dbeeapp.yaml.example](../config/dbeeapp.yaml.example) is an inert example only; DBeeApp does not discover or load it automatically. Copy it to an administrator-managed location, set real environment-specific values, and pass its path explicitly with `--config`.
+
+The file [config/dbeeapp.testbed.yaml](../config/dbeeapp.testbed.yaml) is for the local Docker testbed only. It disables PostgreSQL TLS verification and logging for local test runs; it is not a production baseline.
+
 PostgreSQL TLS verification is strict by default. Configure a trusted CA bundle where needed; do not disable verification to bypass a certificate error.
 
 ## Sessions and Transactions

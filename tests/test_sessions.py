@@ -23,6 +23,7 @@ class SessionManagerTests(unittest.TestCase):
             "reporting": {"user": "u", "credential": {"provider": "dummy", "options": {}}},
         }
         self.config = {"provider_dir": "/providers", "timeouts": {"provider": 1}}
+        self.config["providers"] = {"dummy": {"default_region": "dev", "password": "default"}}
         self.opened = []
         self.provider_calls = []
 
@@ -50,6 +51,13 @@ class SessionManagerTests(unittest.TestCase):
         self.assertIs(reporting_one, reporting_two)
         self.assertEqual(len(self.opened), 2)
         self.assertEqual(len(self.provider_calls), 2)
+
+    def test_provider_options_merge_app_defaults_then_database_overrides(self):
+        self.databases["control"]["credential"]["options"] = {"password": "job-test-only", "safe": "DB_TEST"}
+        with self.manager.session("control"):
+            pass
+        provider_options = self.provider_calls[0][3]
+        self.assertEqual(provider_options, {"default_region": "dev", "password": "job-test-only", "safe": "DB_TEST"})
 
     def test_new_and_override_close_without_replacing_reusable(self):
         with self.manager.session("control") as original:

@@ -1,12 +1,17 @@
 provider_dir: /etc/dbeeapp/providers
 
+providers:
+  cyberark_aim:
+    base_url: https://aim.example.invalid
+    app_id: DBeeApp
+    account_parameter: Object
+    ca_file: /etc/pki/tls/certs/ca-bundle.crt
+    timeout: 10
+
 timeouts:
   connect: 10
   provider: 20
   sql: 60
-
-session:
-  mode: reuse
 
 session:
   mode: reuse

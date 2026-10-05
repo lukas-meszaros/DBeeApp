@@ -21,12 +21,14 @@ class SessionManager:
     def _open(self, database_id):
         database = self.databases[database_id]
         credential = database["credential"]
+        provider_options = dict(self.config.get("providers", {}).get(credential["provider"], {}))
+        provider_options.update(credential.get("options", {}))
         try:
             password = self.provider(
                 self.config["provider_dir"],
                 credential["provider"],
                 database["user"],
-                credential.get("options", {}),
+                provider_options,
                 self.config["timeouts"]["provider"],
             )
             connection = self.connector(database, password, self.config)

@@ -38,7 +38,7 @@ This index reflects the current project structure and implemented ownership boun
 | Path | Responsibility | Dependencies / when to modify |
 | --- | --- | --- |
 | `dbeeapp/cli.py`, `dbeeapp/__main__.py` | CLI, exit codes, command routing. | Config/loader/engine; CLI behavior changes. |
-| `dbeeapp/config.py` | Strict application config and defaults. | stdlib/PyYAML; operational configuration changes. |
+| `dbeeapp/config.py` | Strict application config, global provider defaults, and operational defaults. | stdlib plus vendored PyYAML; operational/provider config changes. |
 | `dbeeapp/template_loader.py` | Safe YAML parsing and source paths. | PyYAML; parsing/security changes. |
 | `dbeeapp/validator.py` | Static schema/reference/path validation and describe model. | Spec contract changes. |
 | `dbeeapp/resolver.py`, `dbeeapp/conditions.py` | Restricted value placeholders and condition operators. | Template evaluation changes. |
@@ -57,10 +57,9 @@ This index reflects the current project structure and implemented ownership boun
 | --- | --- | --- |
 | `dbeeapp/__init__.py`, `dbeeapp/__main__.py` | Version and `python -m dbeeapp` entry point. | `tests/test_cli.py` |
 | `dbeeapp/_vendor/` | Checked-in pure-Python runtime dependencies and license metadata, loaded from local source without `site-packages`. | Regenerate with `tools/vendor_runtime.py` after dependency pin changes; test with Python `-S`. |
-| `tools/vendor_runtime.py` | Unpacks exact local wheels into the vendor tree and preserves runtime metadata/licenses. | Run only for deliberate dependency refreshes; requires a local wheelhouse and `--replace` to replace an existing tree. |
-| `tools/vendor_runtime.py` | Unpacks exact wheels from a local wheelhouse into the source vendor tree; excludes native extension binaries and retains `.dist-info` and licenses. | Vendoring/dependency refresh only. |
+| `tools/vendor_runtime.py` | Unpacks exact local wheels into the vendor tree, excludes native extensions, and preserves required metadata/licenses. | Run only for deliberate dependency refreshes; requires a local wheelhouse and `--replace` to replace an existing tree. |
 | `dbeeapp/cli.py` | CLI commands, static preflight, exit status and dry-run. | `tests/test_cli.py` |
-| `dbeeapp/config.py` | Application-level operational config and defaults, including default session mode. | `tests/test_config.py` |
+| `dbeeapp/config.py` | Application-level operational config, provider defaults, and global session mode. | `tests/test_config.py` |
 | `dbeeapp/template_loader.py` | Bounded safe YAML loader; rejects duplicate keys, aliases and multiple documents. | `tests/test_template_loader.py` |
 | `dbeeapp/validator.py` | Strict Template v1 checks, paths, provider presence, references, session/transaction/stream pairing, describe output. | `tests/test_validator.py`, `tests/test_cli.py` |
 | `dbeeapp/resolver.py`, `dbeeapp/conditions.py` | Typed placeholder resolution, output text and condition operators. | `tests/test_resolver.py` |
@@ -73,7 +72,8 @@ This index reflects the current project structure and implemented ownership boun
 | `dbeeapp/outputs.py` | Bounded stdout/file text, CSV, JSON, JSONL; atomic overwrite. | `tests/test_outputs.py` |
 | `providers/dummy.py` | Test-only password provider. | `tests/test_credentials.py` |
 | `providers/cyberark_aim.py` | HTTPS CyberArk AIM account retrieval provider; endpoint contract needs target-version confirmation. | Manual/provider follow-up |
-| `config/dbeeapp.example.yaml`, `config/testbed.yaml` | Production-shaped config example and explicit insecure local test configuration. | `tests/test_config.py`, integration tests |
+| `config/dbeeapp.yaml.example` | Production-oriented application config template with CyberArk provider defaults. Not loaded implicitly; pass a copied/managed config path using `--config`. | `tests/test_config.py`, provider docs |
+| `config/dbeeapp.testbed.yaml` | Explicit local-only config that disables PostgreSQL TLS and logging for the Docker testbed. Never use in production. | `tests/test_config.py`, `tests/test_postgres_integration.py` |
 
 ## Tests and Testbed
 
@@ -88,4 +88,3 @@ This index reflects the current project structure and implemented ownership boun
 | `testbed/compose.yaml` | Two independent PostgreSQL 16.4 containers bound to loopback ports 55432/55433. |
 | `testbed/init/control.sql`, `testbed/init/reporting.sql` | Test-only roles, schemas and deterministic fixture data. |
 | `examples/<job>/job.yaml`, `examples/<job>/sql/` | Ten isolated job folders; external SQL assets live with their job. |
-| `tools/vendor_runtime.py` | Builds the local pure-Python vendor tree from pinned local wheels and preserves licenses/metadata. |

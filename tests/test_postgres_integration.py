@@ -22,7 +22,7 @@ ENABLED = os.environ.get("DBEEAPP_INTEGRATION") == "1"
 class PostgreSQLIntegrationTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
-        cls.config = load_config(ROOT / "config" / "testbed.yaml")
+        cls.config = load_config(ROOT / "config" / "dbeeapp.testbed.yaml")
         cls.control = {
             "host": "127.0.0.1", "port": 55432, "database": "control", "user": "control_user",
             "ssl": {"mode": "disable"},

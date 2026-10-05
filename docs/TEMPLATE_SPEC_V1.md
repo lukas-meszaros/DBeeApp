@@ -27,7 +27,7 @@ This is the contract for YAML workflow templates. A template is data, never exec
 | `session.mode` | string | no | `reuse`; `reuse` or `new` | Default session policy for SQL steps. Session lifetime is independent from transaction lifetime. |
 | `credential` | mapping | yes | — | Only `provider`, `options`. |
 | `credential.provider` | string | yes | approved provider name | Name only; absolute/relative paths rejected. Must resolve under admin provider directory. |
-| `credential.options` | mapping | no | `{}` | Provider-specific non-secret configuration; secrets must be permission-protected and provider-owned. |
+| `credential.options` | mapping | no | `{}` | Provider-specific database/job overrides. Merged over `application_config.providers.<provider>`; these values take precedence. Do not put a returned database password here. |
 | `ssl` | mapping | no | application default, secure verify-full | Strict certificate and hostname verification by default. Only `mode`, `ca_file` allowed. |
 | `ssl.mode` | string | no | `verify-full` | `verify-full` or `disable`; disabling requires explicit app policy and should be test-only. |
 | `ssl.ca_file` | string | no | platform trust store | CA bundle path; readable and administrator-controlled. |
@@ -100,7 +100,17 @@ Only complete placeholders matching `{{ vars.NAME }}` or `{{ steps.ID.FIELD[.FIE
 
 ## Application Configuration
 
-Application configuration is external to each job. It owns provider directory, global timeouts, default database session mode (`reuse` or `new`, default `reuse`), fetch batch size, row/output ceilings, TLS defaults, logging/failure-log settings, and default result settings. It rejects unknown keys. Database and step overrides take precedence over the global session default. A transaction group requires a reusable database session. Template overrides may not disable required security controls. Documented config keys and types belong in the CLI/config reference, not duplicated into workflow templates.
+Application configuration is external to each job. It owns provider directory, global timeouts, provider-specific defaults under `providers.<provider_name>`, default database session mode (`reuse` or `new`, default `reuse`), fetch batch size, row/output ceilings, TLS defaults, logging/failure-log settings, and default result settings. Provider names map to arbitrary option mappings passed to that provider. At connection time, DBeeApp merges application provider defaults with `credential.options`; database/job values win on duplicate keys. It rejects unknown application-level keys. Database and step overrides take precedence over the global session default. A transaction group requires a reusable database session. Template overrides may not disable required security controls. The example file is never auto-loaded; a config file must be selected explicitly with CLI `--config`.
+
+Application-config provider fields:
+
+| Property | Type | Required | Default / allowed | Rules |
+| --- | --- | --- | --- | --- |
+| `providers` | mapping provider name to mapping | no | `{}` | Provider names use `[a-z][a-z0-9_]*`; keys are matched to `credential.provider`. |
+| `providers.<name>` | mapping string to JSON-compatible values | no | `{}` | Passed as defaults to the named provider; the provider validates its own option keys. |
+| `credential.options` | mapping string to JSON-compatible values | no | `{}` | Per-database values overlay `providers.<credential.provider>` for duplicate keys. |
+
+The application config file is selected only with `--config PATH`; neither `dbeeapp.yaml.example` nor the testbed file is auto-discovered.
 
 ## Exit Codes
 

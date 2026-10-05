@@ -1,6 +1,6 @@
 # Changelog
 
-All notable changes are recorded here. The project is in pre-implementation design; no released version exists.
+All notable changes are recorded here. The public source repository is active; no certified release version has been tagged.
 
 ## Unreleased
 
@@ -10,6 +10,7 @@ All notable changes are recorded here. The project is in pre-implementation desi
 - Added dummy and CyberArk AIM provider scripts behind a bounded JSON subprocess protocol.
 - Added ten examples and a two-instance PostgreSQL testbed with unit and opt-in integration tests.
 - Runtime dependency code is vendored locally, and examples now use one folder per job with an adjacent `sql/` folder.
-- Verified local dependency sourcing under Python 3.9.6 with `-S`; all 69 tests, including five PostgreSQL integration tests, passed without installing runtime libraries.
+- Added application YAML provider defaults with per-database override precedence; renamed config templates to `dbeeapp.yaml.example` and `dbeeapp.testbed.yaml`.
+- Verified local dependency sourcing under Python 3.9.6 with `-S`; all 74 tests, including five PostgreSQL integration tests, passed without installing runtime libraries.
 - Recorded architecture, security, session, provider protocol, offline deployment, user and developer guidance.
-- Release is not yet certified or published; see `docs/PROGRESS.md` for outstanding gates.
+- The initial implementation is published but not RHEL/CyberArk certified; see `docs/PROGRESS.md` for outstanding release gates.

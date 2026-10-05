@@ -1,11 +1,13 @@
 """Strict application-level configuration and operational defaults."""
 
 from pathlib import Path
+import re
 
 from dbeeapp.errors import ConfigurationError
 from dbeeapp.template_loader import load_yaml
 
-_CONFIG_KEYS = {"provider_dir", "timeouts", "session", "postgresql", "results", "logging", "failures"}
+_CONFIG_KEYS = {"provider_dir", "providers", "timeouts", "session", "postgresql", "results", "logging", "failures"}
+_PROVIDER_NAME = re.compile(r"^[a-z][a-z0-9_]*$")
 _SECTIONS = {
     "timeouts": {"connect", "provider", "sql"},
     "session": {"mode"},
@@ -28,6 +30,7 @@ def default_config():
     )
     return {
         "provider_dir": str(provider_dir),
+        "providers": {},
         "timeouts": {"connect": 10.0, "provider": 20.0, "sql": 60.0},
         "session": {"mode": "reuse"},
         "postgresql": {"ssl_mode": "verify-full", "ca_file": None, "allow_insecure": False},
@@ -67,6 +70,18 @@ def load_config(path=None):
         if not isinstance(raw["provider_dir"], str) or not Path(raw["provider_dir"]).is_absolute():
             raise ConfigurationError("provider_dir must be an absolute directory path")
         config["provider_dir"] = raw["provider_dir"]
+    if "providers" in raw:
+        providers = raw["providers"]
+        if not isinstance(providers, dict) or any(not isinstance(name, str) or not name for name in providers):
+            raise ConfigurationError("application config providers must map provider names to option mappings")
+        validated_providers = {}
+        for name, options in providers.items():
+            if not _PROVIDER_NAME.fullmatch(name):
+                raise ConfigurationError("application config provider names must be lowercase identifiers")
+            if not isinstance(options, dict) or any(not isinstance(key, str) for key in options):
+                raise ConfigurationError("application config providers.{} must be a mapping with string keys".format(name))
+            validated_providers[name] = dict(options)
+        config["providers"] = validated_providers
     for key, value in config["timeouts"].items():
         if isinstance(value, bool) or not isinstance(value, (int, float)) or value <= 0:
             raise ConfigurationError("timeouts.{} must be a positive number".format(key))
